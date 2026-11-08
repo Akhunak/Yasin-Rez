@@ -1,0 +1,1930 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ders Rezervasyon Sistemi - Tam Prototip</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- CrossFit / Endüstriyel Tema İçin Google Fonts (Barlow Condensed & Inter) -->
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #121215;
+      color: #f4f4f5;
+      font-family: 'Inter', sans-serif;
+    }
+    .bg-panel {
+      background-color: #1a1a1f;
+    }
+    .bg-input {
+      background-color: #101013;
+    }
+    .font-industrial {
+      font-family: 'Barlow Condensed', sans-serif;
+      letter-spacing: 0.04em;
+    }
+    /* Animasyonları tamamen devre dışı bırakıyoruz */
+    * {
+      transition: none !important;
+      animation: none !important;
+    }
+    input[type="checkbox"] {
+      accent-color: #f59e0b;
+    }
+  </style>
+</head>
+<body class="min-h-screen selection:bg-white selection:text-black">
+
+  <!-- =========================================================
+       ÜST PROTOTİP KONTROL ÇUBUĞU (HER AN ROL DEĞİŞTİRME)
+  ========================================================== -->
+  <div class="bg-zinc-900 border-b border-zinc-800 px-4 py-2 flex flex-wrap justify-between items-center gap-2 text-xs">
+    <div class="flex items-center gap-2">
+      <span class="bg-amber-500 text-black font-extrabold px-2 py-0.5 uppercase">PROTOTİP KONTROLÜ</span>
+      <span class="text-zinc-400 hidden sm:inline">Giriş ekranına dönmeden rolleri anında değiştirebilirsiniz:</span>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <button 
+        type="button"
+        onclick="quickSwitchRole('admin')" 
+        id="proto-btn-admin"
+        class="px-2.5 py-1 font-bold uppercase border cursor-pointer bg-white text-black border-white"
+      >
+        Yasin Hoca (Admin)
+      </button>
+
+      <div class="flex items-center bg-input border border-zinc-700">
+        <button 
+          type="button"
+          onclick="quickSwitchRole('member')" 
+          id="proto-btn-member"
+          class="px-2.5 py-1 font-bold uppercase cursor-pointer text-zinc-300 hover:text-white"
+        >
+          Üye Rolü:
+        </button>
+        <select 
+          id="proto-member-select" 
+          onchange="changeActiveMember(this.value)" 
+          class="bg-input text-amber-400 font-bold px-2 py-1 outline-none border-l border-zinc-700 cursor-pointer"
+        >
+          <!-- JS ile aktif üyeler dolar -->
+        </select>
+      </div>
+
+      <button 
+        type="button"
+        onclick="switchScreen('login')" 
+        class="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 cursor-pointer"
+      >
+        Login Ekranı
+      </button>
+    </div>
+  </div>
+
+
+  <!-- =========================================================
+       YASİN HOCA (ADMİN) ÜST NAVİGASYON BARI
+  ========================================================== -->
+  <header id="admin-header" class="hidden bg-panel border-b-2 border-zinc-800 px-4 py-4">
+    <div class="max-w-3xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <span class="text-[11px] font-bold uppercase tracking-widest text-amber-500 block">
+          YÖNETİCİ PANELİ • YASİN AVCI
+        </span>
+        <h1 class="font-industrial text-2xl sm:text-3xl font-extrabold uppercase text-white">
+          DERS REZERVASYON SİSTEMİ
+        </h1>
+      </div>
+      
+      <div class="flex flex-wrap gap-2">
+        <button type="button" id="nav-slots" onclick="switchScreen('slots')" class="font-bold text-xs uppercase px-3 py-2 border cursor-pointer">
+          Boş Saat Girişi
+        </button>
+        <button type="button" id="nav-schedule" onclick="switchScreen('schedule')" class="font-bold text-xs uppercase px-3 py-2 border cursor-pointer">
+          Bugünkü Program
+        </button>
+        <button type="button" id="nav-members" onclick="switchScreen('members')" class="font-bold text-xs uppercase px-3 py-2 border cursor-pointer">
+          Üyeler
+        </button>
+        <button type="button" onclick="switchScreen('login')" class="bg-zinc-900 text-red-400 hover:border-red-500 font-bold text-xs uppercase px-3 py-2 border border-zinc-700 cursor-pointer">
+          Çıkış
+        </button>
+      </div>
+    </div>
+  </header>
+
+
+  <!-- =========================================================
+       ÜYE (MEMBER) ÜST NAVİGASYON BARI
+  ========================================================== -->
+  <header id="member-header" class="hidden bg-panel border-b-2 border-zinc-800 px-4 py-4">
+    <div class="max-w-3xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span id="member-header-name" class="text-[11px] font-bold uppercase tracking-widest text-emerald-400">
+            ÜYE PANELİ • AKHUN AKTOSUN
+          </span>
+          <span id="member-header-ratio" class="bg-input border border-zinc-700 text-amber-400 font-mono text-[11px] font-bold px-2 py-0.5">
+            Kalan: 7/12
+          </span>
+        </div>
+        <h1 class="font-industrial text-2xl sm:text-3xl font-extrabold uppercase text-white mt-0.5">
+          DERS REZERVASYON SİSTEMİ
+        </h1>
+      </div>
+      
+      <div class="flex flex-wrap gap-2">
+        <button type="button" id="nav-member-booking" onclick="switchScreen('member-booking')" class="font-bold text-xs uppercase px-3 py-2 border cursor-pointer">
+          Ders Saati Seçimi
+        </button>
+        <button type="button" id="nav-member-profile" onclick="openCurrentMemberProfile()" class="font-bold text-xs uppercase px-3 py-2 border cursor-pointer">
+          Profilim
+        </button>
+        <button type="button" onclick="switchScreen('login')" class="bg-zinc-900 text-red-400 hover:border-red-500 font-bold text-xs uppercase px-3 py-2 border border-zinc-700 cursor-pointer">
+          Çıkış
+        </button>
+      </div>
+    </div>
+  </header>
+
+
+  <!-- ==========================================
+       EKRAN 1: GİRİŞ EKRANI (ROL SEÇİMLİ LOGIN)
+  =========================================== -->
+  <section id="screen-login" class="min-h-[calc(100vh-45px)] flex flex-col justify-center items-center px-4 py-8">
+    <div class="w-full max-w-md bg-panel border-2 border-zinc-800 p-8">
+      <div class="text-center mb-6 border-b-2 border-zinc-800 pb-5">
+        <div class="inline-block bg-white text-black font-industrial font-extrabold text-sm px-3 py-0.5 mb-3 uppercase">
+          CROSSFIT APPOINTMENT
+        </div>
+        <h1 class="font-industrial text-4xl font-extrabold uppercase tracking-wider text-white">
+          DERS REZERVASYON SİSTEMİ
+        </h1>
+        <p class="text-zinc-400 text-xs mt-1.5 uppercase tracking-widest">
+          Antrenör & Üye Giriş Paneli
+        </p>
+      </div>
+
+      <!-- PROTOTİP İÇİN HIZLI ROL SEÇİM SEKMELERİ -->
+      <div class="mb-6">
+        <label class="block text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-2">
+          PROTOTİP GİRİŞ ROLÜNÜ SEÇİN:
+        </label>
+        <div class="grid grid-cols-2 gap-2">
+          <button 
+            type="button"
+            id="login-tab-admin"
+            onclick="selectLoginRole('admin')"
+            class="py-2.5 px-3 font-industrial font-extrabold text-base uppercase tracking-wider border-2 bg-white text-black border-white cursor-pointer"
+          >
+            YASİN AVCI (HOCA)
+          </button>
+          <button 
+            type="button"
+            id="login-tab-member"
+            onclick="selectLoginRole('member')"
+            class="py-2.5 px-3 font-industrial font-extrabold text-base uppercase tracking-wider border-2 bg-input text-zinc-300 border-zinc-700 cursor-pointer"
+          >
+            ÜYE GİRİŞİ
+          </button>
+        </div>
+
+        <!-- Üye Seçildiğinde Çıkan Hızlı Hesap Seçici -->
+        <div id="login-member-picker" class="hidden mt-3 bg-input border border-zinc-700 p-3">
+          <label class="block text-[11px] font-bold uppercase text-zinc-400 mb-1.5">
+            Hangi Üye Hesabıyla Giriş Yapılsın?
+          </label>
+          <select 
+            id="login-member-dropdown" 
+            onchange="fillLoginMemberCredentials(this.value)"
+            class="w-full bg-panel border border-zinc-700 text-white text-xs px-2.5 py-2 outline-none font-bold cursor-pointer"
+          >
+            <!-- JS ile doldurulur -->
+          </select>
+        </div>
+      </div>
+
+      <!-- Form yerine Div yapısı kullanıldı (Sayfa yenilenmesini %100 engeller) -->
+      <div class="space-y-5">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
+            E-POSTA ADRESİ
+          </label>
+          <input 
+            type="email" 
+            id="login-email"
+            value="yasin.avci@crossfit.com" 
+            class="w-full bg-input border-2 border-zinc-700 focus:border-white text-white px-4 py-3 text-sm outline-none font-medium"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
+            ŞİFRE (8 HANELİ ALFANÜMERİK)
+          </label>
+          <input 
+            type="text" 
+            id="login-password"
+            value="YA94K28X" 
+            maxlength="8"
+            class="w-full bg-input border-2 border-zinc-700 focus:border-white text-amber-400 px-4 py-3 text-sm outline-none font-mono tracking-widest"
+          />
+        </div>
+
+        <div class="pt-1">
+          <button 
+            type="button" 
+            onclick="handleLogin()" 
+            class="w-full bg-white hover:bg-zinc-200 text-black font-industrial font-extrabold text-xl uppercase py-3.5 tracking-wider border-2 border-white cursor-pointer"
+          >
+            GİRİŞ YAP
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-6 pt-4 border-t border-zinc-800 text-center">
+        <p class="text-[11px] text-zinc-500">
+          Saat kontrolleri Türkiye Yerel Saatine (GMT+3) göre yapılmaktadır.
+        </p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==========================================
+       EKRAN 2: BOŞ SAAT GİRİŞ EKRANI (YASİN HOCA)
+       08:00 - 23:00 Arası (15 Saat = 5 Satır x 3 Kutu)
+  =========================================== -->
+  <section id="screen-slots" class="hidden min-h-[calc(100vh-120px)] pb-28">
+    <main class="max-w-3xl mx-auto px-4 pt-6">
+      <div class="bg-panel border-2 border-zinc-800 p-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider text-zinc-400">
+            ERTESİ GÜN İÇİN BOŞ SAAT BELİRLEME (08:00 - 23:00)
+          </div>
+          <div class="font-industrial text-2xl font-bold text-white mt-0.5">
+            9 KASIM 2026, PAZARTESİ
+          </div>
+        </div>
+        
+        <div class="flex gap-3 border-t sm:border-t-0 pt-3 sm:pt-0 border-zinc-800 text-xs">
+          <div class="bg-input border border-zinc-800 px-3 py-2">
+            <span class="text-zinc-400 block">SEÇİLEN</span>
+            <strong id="summary-total" class="text-lg font-mono text-white">0</strong>
+          </div>
+          <div class="bg-input border border-zinc-800 px-3 py-2">
+            <span class="text-zinc-400 block">ÖZEL (1K)</span>
+            <strong id="summary-private" class="text-lg font-mono text-white">0</strong>
+          </div>
+          <div class="bg-input border border-zinc-800 px-3 py-2">
+            <span class="text-zinc-400 block">ORTAK (2K)</span>
+            <strong id="summary-shared" class="text-lg font-mono text-amber-400">0</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4 text-xs text-zinc-400">
+        * Açmak istediğiniz saat kutularına tıklayın. 2 kişilik dersler için <strong>"Ortak Ders Saati"</strong> kutucuğunu işaretleyin.
+      </div>
+
+      <!-- 5 SATIR x 3 SÜTUN (15 SAAT: 08:00 - 23:00) GRİD ALANI -->
+      <div id="slots-grid" class="grid grid-cols-3 gap-2.5 sm:gap-3"></div>
+    </main>
+
+    <!-- Alt Sabit Onay Barı -->
+    <div class="fixed bottom-0 left-0 right-0 bg-panel border-t-2 border-zinc-800 p-4 z-10">
+      <div class="max-w-3xl mx-auto flex items-center justify-between gap-4">
+        <div class="text-xs text-zinc-400 hidden sm:block">
+          Kaydedilen saatler <strong class="text-white">20:00 - 23:59</strong> arasında üyelerin seçimine açılacaktır.
+        </div>
+        <button 
+          type="button"
+          onclick="openSlotConfirmModal()" 
+          class="w-full sm:w-auto sm:min-w-[240px] ml-auto bg-white hover:bg-zinc-200 text-black font-industrial font-extrabold text-xl uppercase py-3 px-8 tracking-wider cursor-pointer"
+        >
+          TAMAM
+        </button>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==========================================
+       EKRAN 3: BUGÜNKÜ PROGRAM EKRANI (YASİN HOCA)
+  =========================================== -->
+  <section id="screen-schedule" class="hidden min-h-[calc(100vh-120px)] pb-16">
+    <main class="max-w-3xl mx-auto px-4 pt-6">
+      
+      <div class="bg-panel border-2 border-zinc-800 p-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider text-amber-500">
+            İÇERİSİNDE BULUNULAN GÜNÜN PROGRAMI
+          </div>
+          <div class="font-industrial text-2xl font-bold text-white mt-0.5">
+            8 KASIM 2026, PAZAR
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 text-xs font-industrial font-bold uppercase tracking-wider">
+          <span class="bg-white text-black px-3 py-1">ÖZEL DERS</span>
+          <span class="bg-amber-500 text-black px-3 py-1">ORTAK DERS</span>
+          <span class="bg-red-600 text-white px-3 py-1">İPTAL</span>
+        </div>
+      </div>
+
+      <div id="schedule-list" class="space-y-3"></div>
+    </main>
+  </section>
+
+
+  <!-- ==========================================
+       EKRAN 4: ÜYELER LİSTESİ EKRANI (YASİN HOCA)
+  =========================================== -->
+  <section id="screen-members" class="hidden min-h-[calc(100vh-120px)] pb-16">
+    <main class="max-w-3xl mx-auto px-4 pt-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 bg-panel border-2 border-zinc-800 p-4">
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider text-zinc-400">
+            AKTİF STATÜDEKİ ÜYELER
+          </div>
+          <h2 class="font-industrial text-2xl font-extrabold uppercase text-white mt-0.5">
+            ÜYELER LİSTESİ (<span id="active-member-count">0</span>)
+          </h2>
+        </div>
+
+        <button 
+          type="button"
+          onclick="openNewMemberScreen()" 
+          class="bg-white hover:bg-zinc-200 text-black font-industrial font-extrabold text-lg uppercase px-5 py-2.5 tracking-wider cursor-pointer flex items-center justify-center gap-2"
+        >
+          <span>+ YENİ ÜYE OLUŞTUR</span>
+        </button>
+      </div>
+
+      <div class="bg-panel border-2 border-zinc-800">
+        <div class="grid grid-cols-12 border-b-2 border-zinc-800 bg-input px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+          <div class="col-span-5 sm:col-span-5">ÜYE ADI SOYADI</div>
+          <div class="col-span-3 sm:col-span-3 text-center">KALAN / TOPLAM</div>
+          <div class="col-span-4 sm:col-span-4 text-right">İŞLEMLER</div>
+        </div>
+
+        <div id="members-list-container" class="divide-y divide-zinc-800"></div>
+      </div>
+    </main>
+  </section>
+
+
+  <!-- ==========================================
+       EKRAN 5: YENİ ÜYE GİRİŞİ EKRANI (YASİN HOCA)
+  =========================================== -->
+  <section id="screen-new-member" class="hidden min-h-[calc(100vh-120px)] pb-16">
+    <main class="max-w-xl mx-auto px-4 pt-6">
+      <div class="bg-panel border-2 border-zinc-800 p-6">
+        
+        <div class="border-b-2 border-zinc-800 pb-4 mb-6">
+          <span class="text-[11px] font-bold uppercase tracking-widest text-amber-500">ÜYE YÖNETİMİ</span>
+          <h2 class="font-industrial text-3xl font-extrabold uppercase text-white mt-0.5">
+            YENİ ÜYE GİRİŞİ
+          </h2>
+        </div>
+
+        <!-- Form yerine Div yapısı kullanıldı -->
+        <div id="new-member-form" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">AD * <span class="text-[10px] text-zinc-500 font-normal">(Sadece Harf)</span></label>
+              <input 
+                type="text" 
+                id="nm-firstname" 
+                oninput="sanitizeTurkishLetters(this)"
+                class="w-full bg-input border-2 border-zinc-700 focus:border-white text-white px-3 py-2.5 text-sm outline-none" 
+                placeholder="Örn: Akhun" 
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">SOYAD * <span class="text-[10px] text-zinc-500 font-normal">(Sadece Harf)</span></label>
+              <input 
+                type="text" 
+                id="nm-lastname" 
+                oninput="sanitizeTurkishLetters(this)"
+                class="w-full bg-input border-2 border-zinc-700 focus:border-white text-white px-3 py-2.5 text-sm outline-none" 
+                placeholder="Örn: Aktosun" 
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
+                TELEFON <span class="text-[10px] text-zinc-500 font-normal">(İsteğe Bağlı)</span>
+              </label>
+              <input 
+                type="tel" 
+                id="nm-phone" 
+                oninput="handlePhoneInput(this)"
+                onblur="handlePhoneBlur(this)"
+                class="w-full bg-input border-2 border-zinc-700 focus:border-white text-white px-3 py-2.5 text-sm outline-none font-mono" 
+                placeholder="0534 967 36 13" 
+              />
+              <p id="nm-phone-error" class="hidden text-[11px] text-red-400 mt-1">
+                Telefon 05 ile başlamalı ve 11 haneli olmalıdır.
+              </p>
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">E-POSTA *</label>
+              <input 
+                type="email" 
+                id="nm-email" 
+                class="w-full bg-input border-2 border-zinc-700 focus:border-white text-white px-3 py-2.5 text-sm outline-none" 
+                placeholder="ornek@mail.com" 
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">PAKETİNDEKİ DERS SAYISI (0-99) *</label>
+              <input 
+                type="text" 
+                inputmode="numeric"
+                id="nm-total" 
+                value="12" 
+                oninput="sanitizeTwoDigitNumber(this)"
+                class="w-full bg-input border-2 border-zinc-700 focus:border-white text-white px-3 py-2.5 text-sm outline-none font-mono" 
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">TAMAMLADIĞI DERS SAYISI (0-99) *</label>
+              <input 
+                type="text" 
+                inputmode="numeric"
+                id="nm-completed" 
+                value="0" 
+                oninput="sanitizeTwoDigitNumber(this)"
+                class="w-full bg-input border-2 border-zinc-700 focus:border-white text-white px-3 py-2.5 text-sm outline-none font-mono" 
+              />
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-zinc-800">
+            <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
+              8 HANELİ ALFANÜMERİK ŞİFRE *
+            </label>
+            <div class="flex gap-2">
+              <input 
+                type="text" 
+                id="nm-password" 
+                readonly 
+                placeholder="'Şifre Üret' butonuna tıklayın"
+                class="w-full bg-zinc-900 border-2 border-zinc-700 text-amber-400 px-3 py-2.5 text-sm font-mono tracking-widest outline-none"
+              />
+              <button 
+                type="button" 
+                onclick="generatePassword()" 
+                class="bg-zinc-800 hover:bg-zinc-700 text-white border-2 border-zinc-600 font-industrial font-bold text-base uppercase px-4 py-2 whitespace-nowrap cursor-pointer"
+              >
+                ŞİFRE ÜRET
+              </button>
+            </div>
+            <p class="text-[11px] text-zinc-500 mt-1">
+              * Üretilen şifre kayıt onaylandığında üyeye otomatik e-posta olarak iletilir.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 pt-4 border-t border-zinc-800">
+            <button 
+              type="button" 
+              onclick="switchScreen('members')" 
+              class="bg-input hover:bg-zinc-900 text-white border-2 border-zinc-700 font-industrial font-bold text-lg uppercase py-3 cursor-pointer"
+            >
+              VAZGEÇ
+            </button>
+            <button 
+              type="button" 
+              onclick="handleNewMemberSubmit()" 
+              class="bg-white hover:bg-zinc-200 text-black border-2 border-white font-industrial font-extrabold text-lg uppercase py-3 cursor-pointer"
+            >
+              TAMAMLA
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </section>
+
+
+  <!-- ==========================================
+       EKRAN 6: ÜYE DETAY & GÜNCELLEME EKRANI
+       (Hem Yasin Hoca hem de Üyenin kendisi açabilir)
+  =========================================== -->
+  <section id="screen-member-detail" class="hidden min-h-[calc(100vh-120px)] pb-16">
+    <main class="max-w-xl mx-auto px-4 pt-6">
+      <div class="bg-panel border-2 border-zinc-800 p-6">
+        
+        <div class="flex items-center justify-between border-b-2 border-zinc-800 pb-4 mb-6">
+          <div>
+            <span id="detail-mode-badge" class="text-[11px] font-bold uppercase tracking-widest text-amber-500">
+              ÜYE PROFİL DETAYI
+            </span>
+            <h2 id="detail-header-name" class="font-industrial text-3xl font-extrabold uppercase text-white mt-0.5">
+              ÜYE ADI
+            </h2>
+          </div>
+          <button 
+            type="button"
+            id="detail-back-btn"
+            onclick="handleDetailBack()" 
+            class="text-xs font-bold uppercase px-3 py-1.5 bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white cursor-pointer"
+          >
+            ← Geri Dön
+          </button>
+        </div>
+
+        <!-- Ders Bakiye Özeti Kutusu -->
+        <div class="bg-input border-2 border-zinc-800 p-4 mb-6 flex items-center justify-between">
+          <div>
+            <span class="text-xs font-bold uppercase text-zinc-400 block">MEVCUT PAKET DURUMU (KALAN / TOPLAM)</span>
+            <span class="text-[11px] text-zinc-500">Paketi biten üyeler eksi (-) bakiyeden devam edebilir</span>
+          </div>
+          <div id="detail-lesson-ratio" class="font-industrial text-4xl font-extrabold text-amber-400 tracking-wider">
+            7/12
+          </div>
+        </div>
+
+        <!-- Üye Bilgileri Formu -->
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">AD</label>
+              <input type="text" id="det-firstname" oninput="sanitizeTurkishLetters(this)" disabled class="w-full bg-input border-2 border-zinc-800 disabled:text-zinc-300 text-white px-3 py-2.5 text-sm outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">SOYAD</label>
+              <input type="text" id="det-lastname" oninput="sanitizeTurkishLetters(this)" disabled class="w-full bg-input border-2 border-zinc-800 disabled:text-zinc-300 text-white px-3 py-2.5 text-sm outline-none" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">TELEFON</label>
+              <input type="tel" id="det-phone" oninput="handlePhoneInput(this)" onblur="handlePhoneBlur(this)" disabled class="w-full bg-input border-2 border-zinc-800 disabled:text-zinc-300 text-white px-3 py-2.5 text-sm font-mono outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">E-POSTA</label>
+              <input type="email" id="det-email" disabled class="w-full bg-input border-2 border-zinc-800 disabled:text-zinc-300 text-white px-3 py-2.5 text-sm outline-none" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">TOPLAM DERS (0-99)</label>
+              <input type="text" inputmode="numeric" id="det-total" oninput="sanitizeTwoDigitNumber(this)" disabled class="w-full bg-input border-2 border-zinc-800 disabled:text-zinc-300 text-white px-3 py-2.5 text-sm font-mono outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">TAMAMLANAN (0-99)</label>
+              <input type="text" inputmode="numeric" id="det-completed" oninput="sanitizeTwoDigitNumber(this)" disabled class="w-full bg-input border-2 border-zinc-800 disabled:text-zinc-300 text-white px-3 py-2.5 text-sm font-mono outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">KALAN DERS</label>
+              <input type="text" id="det-remaining" disabled class="w-full bg-zinc-900 border-2 border-zinc-800 text-amber-400 px-3 py-2.5 text-sm font-mono font-bold outline-none" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">GİRİŞ ŞİFRESİ</label>
+            <input type="text" id="det-password" disabled class="w-full bg-zinc-900 border-2 border-zinc-800 text-zinc-400 px-3 py-2.5 text-sm font-mono tracking-widest outline-none" />
+          </div>
+        </div>
+
+        <!-- GÖRÜNTÜLEME MODU ALT BUTONLARI (Sadece Yasin Hoca Rolündeyken Görünür) -->
+        <div id="detail-view-actions" class="flex items-center justify-between pt-6 mt-6 border-t-2 border-zinc-800">
+          <button 
+            type="button"
+            onclick="openDeleteMemberModal(selectedMemberId)" 
+            class="bg-red-600 hover:bg-red-700 text-white font-industrial font-extrabold text-lg uppercase px-6 py-2.5 tracking-wider cursor-pointer"
+          >
+            SİL
+          </button>
+
+          <button 
+            type="button"
+            onclick="enableMemberEditMode()" 
+            class="bg-white hover:bg-zinc-200 text-black font-industrial font-extrabold text-lg uppercase px-6 py-2.5 tracking-wider cursor-pointer"
+          >
+            GÜNCELLE
+          </button>
+        </div>
+
+        <!-- GÜNCELLEME (EDIT) MODU ALT BUTONLARI -->
+        <div id="detail-edit-actions" class="hidden flex items-center justify-end gap-3 pt-6 mt-6 border-t-2 border-zinc-800">
+          <button 
+            type="button"
+            onclick="cancelMemberEditMode()" 
+            class="bg-input hover:bg-zinc-900 text-white border-2 border-zinc-700 font-industrial font-bold text-lg uppercase px-6 py-2.5 cursor-pointer"
+          >
+            VAZGEÇ
+          </button>
+          <button 
+            type="button"
+            onclick="saveMemberChanges()" 
+            class="bg-amber-500 hover:bg-amber-400 text-black font-industrial font-extrabold text-lg uppercase px-6 py-2.5 cursor-pointer"
+          >
+            KAYDET
+          </button>
+        </div>
+
+      </div>
+    </main>
+  </section>
+
+
+  <!-- =========================================================
+       EKRAN 7: ÜYE - DERS SAATİ SEÇİM EKRANI (MEMBER BOOKING)
+  ========================================================== -->
+  <section id="screen-member-booking" class="hidden min-h-[calc(100vh-120px)] pb-16">
+    <main class="max-w-3xl mx-auto px-4 pt-6">
+
+      <!-- SİMÜLASYON SAAT KONTROL PANELİ (4 Zaman Kuralını Test Etmek İçin) -->
+      <div class="bg-zinc-900 border-2 border-zinc-700 p-3.5 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-amber-400">
+            TÜRKİYE YEREL SAATİ SİMÜLASYONU (TEST PANELİ):
+          </span>
+          <span class="text-[11px] text-zinc-400">
+            Farklı saat kurallarını test etmek için bir duruma tıklayın
+          </span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
+          <button 
+            type="button"
+            onclick="setMemberSimMode('BEFORE_20')" 
+            id="sim-btn-BEFORE_20"
+            class="p-2 border text-left cursor-pointer"
+          >
+            <div class="font-bold">1. Saat 20:00 Öncesi</div>
+            <div class="text-[10px] opacity-75">Örn: Saat 18:30</div>
+          </button>
+
+          <button 
+            type="button"
+            onclick="setMemberSimMode('NO_SLOTS')" 
+            id="sim-btn-NO_SLOTS"
+            class="p-2 border text-left cursor-pointer"
+          >
+            <div class="font-bold">2. 20:00-23:59 (Saat Yok)</div>
+            <div class="text-[10px] opacity-75">Hoca henüz saat girmedi</div>
+          </button>
+
+          <button 
+            type="button"
+            onclick="setMemberSimMode('OPEN_WINDOW')" 
+            id="sim-btn-OPEN_WINDOW"
+            class="p-2 border text-left cursor-pointer"
+          >
+            <div class="font-bold">3. 20:00-23:59 (Aktif)</div>
+            <div class="text-[10px] opacity-75">Seçim / Değişim / İptal</div>
+          </button>
+
+          <button 
+            type="button"
+            onclick="setMemberSimMode('AFTER_MIDNIGHT')" 
+            id="sim-btn-AFTER_MIDNIGHT"
+            class="p-2 border text-left cursor-pointer"
+          >
+            <div class="font-bold">4. 23:59 Sonrası</div>
+            <div class="text-[10px] opacity-75">Geç İptal = Ders Yanar</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Üst Bilgi Başlığı -->
+      <div class="bg-panel border-2 border-zinc-800 p-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider text-zinc-400">
+            ERTESİ GÜN İÇİN DERS SAATİ SEÇİMİ (GÜNDE MAKS. 1 DERS)
+          </div>
+          <div class="font-industrial text-2xl font-bold text-white mt-0.5">
+            9 KASIM 2026, PAZARTESİ
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4 border-t sm:border-t-0 pt-3 sm:pt-0 border-zinc-800">
+          <div class="bg-input border border-zinc-800 px-3.5 py-2 text-right">
+            <span class="text-[10px] font-bold uppercase text-zinc-400 block">KALAN / TOPLAM DERS</span>
+            <strong id="member-booking-ratio" class="font-industrial text-2xl text-amber-400 tracking-wider">7/12</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÜYENİN MEVCUT SEÇTİĞİ DERS KUTUSU (Varsa Gösterilir) -->
+      <div id="member-active-reservation-box" class="hidden bg-panel border-2 border-emerald-500 p-4 mb-6">
+        <!-- JS ile doldurulur -->
+      </div>
+
+      <!-- DURUM 1: SAAT 20:00 ÖNCESİ UYARI EKRANI -->
+      <div id="member-state-before20" class="hidden bg-panel border-2 border-zinc-800 p-10 text-center">
+        <div class="inline-block bg-zinc-800 text-zinc-300 font-mono text-xs font-bold px-3 py-1 mb-3 uppercase">
+          TÜRKİYE YEREL SAATİ: 18:30
+        </div>
+        <h3 class="font-industrial text-3xl font-extrabold uppercase text-white mb-2">
+          Ders saati seçimleri henüz başlamamıştır
+        </h3>
+        <p class="text-xs text-zinc-400 max-w-md mx-auto">
+          Ertesi güne ait ders saati seçimleri her gün Türkiye yerel saatine göre <strong>20:00 - 23:59</strong> saatleri arasında açılmaktadır.
+        </p>
+      </div>
+
+      <!-- DURUM 2: 20:00 - 23:59 ARASI AMA YASİN HOCA SAAT GİRMEDİ -->
+      <div id="member-state-noslots" class="hidden bg-panel border-2 border-zinc-800 p-10 text-center">
+        <div class="inline-block bg-amber-500/20 text-amber-400 font-mono text-xs font-bold px-3 py-1 mb-3 uppercase">
+          TÜRKİYE YEREL SAATİ: 20:15
+        </div>
+        <h3 class="font-industrial text-3xl font-extrabold uppercase text-white mb-2">
+          Uygun saatler henüz belirlenmemiştir. Daha sonra tekrar deneyiniz
+        </h3>
+        <p class="text-xs text-zinc-400 max-w-md mx-auto">
+          Antrenörünüz ertesi gün için uygun saat girişini tamamladığında bu ekrandan seçim yapabilirsiniz.
+        </p>
+      </div>
+
+      <!-- DURUM 3: 20:00 - 23:59 ARASI AKTİF BOŞ SAAT SEÇİM GRİDİ -->
+      <div id="member-state-open" class="hidden">
+        <div class="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-zinc-400">
+          <span id="member-grid-instruction">
+            * Müsait bir saat dilimine tıklayıp <strong>"SEÇ"</strong> butonuyla rezervasyonunuzu onaylayabilirsiniz.
+          </span>
+          <div class="flex items-center gap-3 shrink-0">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-white inline-block"></span> Özel Ders (1 Kişi)</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-amber-500 inline-block"></span> Ortak Ders (Maks 2 Kişi)</span>
+          </div>
+        </div>
+
+        <div id="member-available-slots-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <!-- JS ile müsait saatler buraya basılır -->
+        </div>
+      </div>
+
+      <!-- DURUM 4: 23:59 SONRASI BİLGİ KUTUSU -->
+      <div id="member-state-aftermidnight" class="hidden bg-panel border-2 border-zinc-800 p-6 text-center">
+        <div class="inline-block bg-red-600/20 text-red-400 font-mono text-xs font-bold px-3 py-1 mb-2 uppercase">
+          SEÇİM SÜRESİ SONA ERDİ (23:59 SONRASI)
+        </div>
+        <h3 class="font-industrial text-2xl font-extrabold uppercase text-white mb-1">
+          Yeni Ders Seçimi ve Saat Değişikliği Kapalıdır
+        </h3>
+        <p class="text-xs text-zinc-400 max-w-lg mx-auto">
+          23:59 sonrasında mevcut seçilmiş dersinizi iptal etmeniz durumunda ders <strong>yapılmış sayılır</strong> ve kalan ders sayınızdan 1 düşülür.
+        </p>
+      </div>
+
+    </main>
+  </section>
+
+
+  <!-- ==========================================
+       TÜM POP-UP / MODAL PENCERELERİ
+  =========================================== -->
+
+  <!-- 1. BOŞ SAAT KAYIT ONAY POP-UP (YASİN HOCA) -->
+  <div id="slot-confirm-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+    <div class="w-full max-w-md bg-panel border-2 border-white p-6">
+      <h3 class="font-industrial text-2xl font-extrabold uppercase text-white border-b border-zinc-800 pb-3 mb-4">
+        BOŞ SAAT KAYIT ONAYI
+      </h3>
+      <p class="text-sm text-zinc-200 mb-4">
+        Boş saatler sisteme kaydedilecektir. Onaylıyor musunuz?
+      </p>
+      <div id="modal-selected-list" class="bg-input border border-zinc-800 p-3 mb-6 max-h-40 overflow-y-auto text-xs font-mono text-zinc-300 space-y-1"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <button type="button" onclick="closeModal('slot-confirm-modal')" class="bg-input text-white border-2 border-zinc-700 font-industrial font-bold text-lg uppercase py-2.5 cursor-pointer">VAZGEÇ</button>
+        <button type="button" onclick="confirmSaveSlots()" class="bg-white text-black border-2 border-white font-industrial font-extrabold text-lg uppercase py-2.5 cursor-pointer">ONAYLA</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. YENİ ÜYE GİRİŞİ ONAY POP-UP (YASİN HOCA) -->
+  <div id="new-member-confirm-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+    <div class="w-full max-w-md bg-panel border-2 border-white p-6">
+      <h3 class="font-industrial text-2xl font-extrabold uppercase text-white border-b border-zinc-800 pb-3 mb-4">
+        YENİ ÜYE KAYIT ONAYI
+      </h3>
+      <p class="text-sm text-zinc-200 mb-6">
+        Üye girişi tamamlanacaktır. İşlemi onaylıyor musunuz?
+      </p>
+      <div class="grid grid-cols-2 gap-3">
+        <button type="button" onclick="closeModal('new-member-confirm-modal')" class="bg-input text-white border-2 border-zinc-700 font-industrial font-bold text-lg uppercase py-2.5 cursor-pointer">İPTAL</button>
+        <button type="button" onclick="confirmCreateMember()" class="bg-white text-black border-2 border-white font-industrial font-extrabold text-lg uppercase py-2.5 cursor-pointer">ONAYLA</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. ÜYE SİLME (PASİFE ÇEKME) ONAY POP-UP -->
+  <div id="delete-member-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+    <div class="w-full max-w-md bg-panel border-2 border-red-600 p-6">
+      <h3 class="font-industrial text-2xl font-extrabold uppercase text-red-500 border-b border-zinc-800 pb-3 mb-4">
+        ÜYE SİLME ONAYI
+      </h3>
+      <p class="text-sm text-zinc-200 mb-2">
+        Üye bilgileri silinecektir. Onaylıyor musunuz?
+      </p>
+      <p class="text-xs text-zinc-400 mb-6">
+        * Onaylandığında <strong id="delete-member-name" class="text-white"></strong> veritabanında "Pasif" statüye çekilecek ve aktif üyeler listesinden kaldırılacaktır.
+      </p>
+      <div class="grid grid-cols-2 gap-3">
+        <button type="button" onclick="closeModal('delete-member-modal')" class="bg-input text-white border-2 border-zinc-700 font-industrial font-bold text-lg uppercase py-2.5 cursor-pointer">İPTAL</button>
+        <button type="button" onclick="confirmDeleteMember()" class="bg-red-600 text-white border-2 border-red-600 font-industrial font-extrabold text-lg uppercase py-2.5 cursor-pointer">ONAYLA</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. PAKETİ YENİLE POP-UP (0-99 Sınırlı) -->
+  <div id="renew-package-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+    <div class="w-full max-w-sm bg-panel border-2 border-amber-500 p-6">
+      <span class="text-[11px] font-bold uppercase tracking-widest text-amber-500">PAKET YENİLEME</span>
+      <h3 id="renew-member-name" class="font-industrial text-2xl font-extrabold uppercase text-white border-b border-zinc-800 pb-3 mb-4 mt-0.5">
+        ÜYE ADI
+      </h3>
+      <div class="mb-6">
+        <label class="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-2">
+          Yeni Paketteki Toplam Ders Sayısı (0-99)
+        </label>
+        <input 
+          type="text" 
+          inputmode="numeric"
+          id="renew-total-input" 
+          value="12" 
+          oninput="sanitizeTwoDigitNumber(this)"
+          class="w-full bg-input border-2 border-zinc-700 focus:border-amber-500 text-white px-3 py-3 text-lg font-mono outline-none"
+        />
+        <p class="text-[11px] text-zinc-400 mt-1.5">
+          * Tamam'a tıklandığında Toplam Ders ve Kalan Ders sayısı bu değer ile güncellenecektir.
+        </p>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <button type="button" onclick="closeModal('renew-package-modal')" class="bg-input text-white border-2 border-zinc-700 font-industrial font-bold text-lg uppercase py-2.5 cursor-pointer">VAZGEÇ</button>
+        <button type="button" onclick="confirmRenewPackage()" class="bg-amber-500 text-black border-2 border-amber-500 font-industrial font-extrabold text-lg uppercase py-2.5 cursor-pointer">TAMAM</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. ÜYE DERS SEÇİM / DEĞİŞİM ONAY POP-UP -->
+  <div id="member-book-confirm-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+    <div class="w-full max-w-md bg-panel border-2 border-white p-6">
+      <span id="book-modal-badge" class="text-[11px] font-bold uppercase tracking-widest text-amber-500">DERS SEÇİM ONAYI</span>
+      <h3 id="book-modal-title" class="font-industrial text-2xl font-extrabold uppercase text-white border-b border-zinc-800 pb-3 mb-4 mt-0.5">
+        09:00 - 10:00
+      </h3>
+      <p id="book-modal-desc" class="text-sm text-zinc-200 mb-6"></p>
+      <div class="grid grid-cols-2 gap-3">
+        <button type="button" onclick="closeModal('member-book-confirm-modal')" class="bg-input text-white border-2 border-zinc-700 font-industrial font-bold text-lg uppercase py-2.5 cursor-pointer">İPTAL</button>
+        <button type="button" onclick="confirmMemberBooking()" class="bg-white text-black border-2 border-white font-industrial font-extrabold text-lg uppercase py-2.5 cursor-pointer">ONAYLA</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. ÜYE DERS İPTAL (VAZGEÇME) ONAY POP-UP -->
+  <div id="member-cancel-confirm-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+    <div class="w-full max-w-md bg-panel border-2 border-red-600 p-6">
+      <span class="text-[11px] font-bold uppercase tracking-widest text-red-500">DERS İPTAL ONAYI</span>
+      <h3 id="cancel-modal-title" class="font-industrial text-2xl font-extrabold uppercase text-white border-b border-zinc-800 pb-3 mb-4 mt-0.5">
+        SEÇİLMİŞ DERSTEN VAZGEÇME
+      </h3>
+      <p id="cancel-modal-desc" class="text-sm text-zinc-200 mb-6"></p>
+      <div class="grid grid-cols-2 gap-3">
+        <button type="button" onclick="closeModal('member-cancel-confirm-modal')" class="bg-input text-white border-2 border-zinc-700 font-industrial font-bold text-lg uppercase py-2.5 cursor-pointer">VAZGEÇ</button>
+        <button type="button" onclick="confirmMemberCancelBooking()" class="bg-red-600 text-white border-2 border-red-600 font-industrial font-extrabold text-lg uppercase py-2.5 cursor-pointer">ONAYLA</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. GENEL BİLDİRİM MODALI -->
+  <div id="toast-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+    <div class="w-full max-w-sm bg-panel border-2 border-emerald-500 p-6 text-center">
+      <div class="inline-block bg-emerald-500 text-black font-bold text-xs px-2 py-1 uppercase mb-3">
+        BİLGİ
+      </div>
+      <h4 id="toast-title" class="font-industrial text-2xl font-extrabold uppercase text-white mb-2">
+        İŞLEM TAMAMLANDI
+      </h4>
+      <p id="toast-desc" class="text-xs text-zinc-300 mb-6"></p>
+      <button type="button" onclick="closeModal('toast-modal')" class="w-full bg-emerald-500 text-black font-industrial font-extrabold text-lg uppercase py-2.5 cursor-pointer">
+        TAMAM
+      </button>
+    </div>
+  </div>
+
+
+  <script>
+    // ==========================================
+    // 1. MOCKUP VERİLER (STATE)
+    // ==========================================
+
+    let currentRole = 'admin';
+    let currentMemberId = 1; // Varsayılan Üye: Akhun Aktosun
+    let loginSelectedRole = 'admin';
+    let memberSimMode = 'OPEN_WINDOW';
+    let pendingBookingSlotId = null;
+
+    // A) Member Tablosu Mockup Verisi (Murat Özkan 0/12 ile eksi bakiyeyi test etmek için hazır)
+    let members = [
+      { id: 1, firstName: 'Akhun', lastName: 'Aktosun', phone: '0532 411 22 33', email: 'akhun.aktosun@mail.com', totalLessons: 12, completedLessons: 5, remainingLessons: 7, password: 'AA72M91P', status: 'Active' },
+      { id: 2, firstName: 'Zeynep', lastName: 'Şahin', phone: '0544 892 10 11', email: 'zeynep.sahin@mail.com', totalLessons: 12, completedLessons: 6, remainingLessons: 6, password: 'ZS48L20Q', status: 'Active' },
+      { id: 3, firstName: 'Efe', lastName: 'Yılmaz', phone: '0533 190 88 77', email: 'efe.yilmaz@mail.com', totalLessons: 10, completedLessons: 9, remainingLessons: 1, password: 'EY83X19W', status: 'Active' },
+      { id: 4, firstName: 'Alaaddin', lastName: 'Tarhan', phone: '0530 777 66 55', email: 'alaaddin.tarhan@mail.com', totalLessons: 12, completedLessons: 2, remainingLessons: 10, password: 'AT55N42K', status: 'Active' },
+      { id: 5, firstName: 'Murat', lastName: 'Özkan', phone: '0555 321 45 67', email: 'murat.ozkan@mail.com', totalLessons: 12, completedLessons: 12, remainingLessons: 0, password: 'MO91V34Z', status: 'Active' }
+    ];
+
+    // B) Ertesi Gün İçin 08:00 - 23:00 Arası 15 Saatlik Dilim (5 Satır x 3 Kutu)
+    const timeSlots = Array.from({ length: 15 }, (_, idx) => {
+      const hour = idx + 8; // 08:00 - 23:00
+      const start = String(hour).padStart(2, '0') + ':00';
+      const end = String(hour + 1).padStart(2, '0') + ':00';
+      const defaultSelected = [9, 10, 17, 18, 19].includes(hour);
+      const defaultShared = [10, 18].includes(hour);
+      
+      let initialBookings = [];
+      if (hour === 10) initialBookings = [{ memberId: 2, status: 'booked' }];
+      if (hour === 17) initialBookings = [{ memberId: 4, status: 'booked' }];
+
+      return { 
+        id: hour, 
+        label: `${start} - ${end}`, 
+        selected: defaultSelected, 
+        isShared: defaultShared,
+        bookings: initialBookings
+      };
+    });
+
+    // C) Bugünkü Program Mockup Verisi
+    const todaySchedule = [
+      {
+        hour: '09:00 - 10:00',
+        type: 'private_active',
+        members: [{ name: 'Akhun Aktosun', lessonProgress: '6/12', cancelled: false }]
+      },
+      {
+        hour: '10:00 - 11:00',
+        type: 'shared_active',
+        members: [
+          { name: 'Zeynep Şahin', lessonProgress: '7/12', cancelled: false },
+          { name: 'Elif Demir', lessonProgress: '4/12', cancelled: false }
+        ]
+      },
+      {
+        hour: '17:00 - 18:00',
+        type: 'private_cancelled',
+        members: [{ name: 'Murat Özkan', lessonProgress: '12/12', cancelled: true }]
+      },
+      {
+        hour: '18:00 - 19:00',
+        type: 'shared_partial_cancel',
+        members: [
+          { name: 'Efe Yılmaz', lessonProgress: '10/10', cancelled: true },
+          { name: 'Alaaddin Tarhan', lessonProgress: '3/12', cancelled: false }
+        ]
+      },
+      {
+        hour: '19:00 - 20:00',
+        type: 'private_active',
+        members: [{ name: 'Selin Arslan', lessonProgress: '5/12', cancelled: false }]
+      }
+    ];
+
+    let selectedMemberId = null;
+    let deleteTargetMemberId = null;
+    let renewTargetMemberId = null;
+
+    // ==========================================
+    // 2. INPUT DOĞRULAMA (VALIDASYON) FONKSİYONLARI
+    // ==========================================
+    function sanitizeTurkishLetters(inputEl) {
+      inputEl.value = inputEl.value.replace(/[^a-zA-ZçÇğĞıİöÖşŞüÜ\s]/g, '');
+    }
+
+    function sanitizeTwoDigitNumber(inputEl) {
+      let digits = inputEl.value.replace(/\D/g, '');
+      if (digits.length > 2) digits = digits.slice(0, 2);
+      inputEl.value = digits;
+    }
+
+    function formatPhoneDigits(digits) {
+      if (!digits) return '';
+      let p = digits.slice(0, 11);
+      if (p.length <= 4) return p;
+      if (p.length <= 7) return `${p.slice(0, 4)} ${p.slice(4)}`;
+      if (p.length <= 9) return `${p.slice(0, 4)} ${p.slice(4, 7)} ${p.slice(7)}`;
+      return `${p.slice(0, 4)} ${p.slice(4, 7)} ${p.slice(7, 9)} ${p.slice(9, 11)}`;
+    }
+
+    function handlePhoneInput(inputEl) {
+      let digits = inputEl.value.replace(/\D/g, '');
+      const maxLen = digits.startsWith('5') ? 10 : 11;
+      digits = digits.slice(0, maxLen);
+      inputEl.value = formatPhoneDigits(digits);
+      const errEl = document.getElementById('nm-phone-error');
+      if (errEl) errEl.classList.add('hidden');
+    }
+
+    function handlePhoneBlur(inputEl) {
+      let digits = inputEl.value.replace(/\D/g, '');
+      if (!digits) return;
+      if (digits.startsWith('5')) digits = '0' + digits;
+      digits = digits.slice(0, 11);
+      inputEl.value = formatPhoneDigits(digits);
+    }
+
+    function isValidTurkishMobile(phoneStr) {
+      const digits = phoneStr.replace(/\D/g, '');
+      if (digits.length === 0) return true;
+      return /^05\d{9}$/.test(digits);
+    }
+
+    // ==========================================
+    // 3. ROL SEÇİMİ & LOGIN YÖNETİMİ
+    // ==========================================
+    function populateMemberDropdowns() {
+      const activeMembers = members.filter(m => m.status === 'Active');
+      const protoSelect = document.getElementById('proto-member-select');
+      const loginSelect = document.getElementById('login-member-dropdown');
+
+      const optionsHtml = activeMembers.map(m => 
+        `<option value="${m.id}" ${m.id === currentMemberId ? 'selected' : ''}>${m.firstName} ${m.lastName} (${m.remainingLessons}/${m.totalLessons})</option>`
+      ).join('');
+
+      protoSelect.innerHTML = optionsHtml;
+      loginSelect.innerHTML = optionsHtml;
+    }
+
+    function selectLoginRole(role) {
+      loginSelectedRole = role;
+      const tabAdmin = document.getElementById('login-tab-admin');
+      const tabMember = document.getElementById('login-tab-member');
+      const picker = document.getElementById('login-member-picker');
+
+      if (role === 'admin') {
+        tabAdmin.className = 'py-2.5 px-3 font-industrial font-extrabold text-base uppercase tracking-wider border-2 bg-white text-black border-white cursor-pointer';
+        tabMember.className = 'py-2.5 px-3 font-industrial font-extrabold text-base uppercase tracking-wider border-2 bg-input text-zinc-300 border-zinc-700 cursor-pointer';
+        picker.classList.add('hidden');
+        document.getElementById('login-email').value = 'yasin.avci@crossfit.com';
+        document.getElementById('login-password').value = 'YA94K28X';
+      } else {
+        tabMember.className = 'py-2.5 px-3 font-industrial font-extrabold text-base uppercase tracking-wider border-2 bg-white text-black border-white cursor-pointer';
+        tabAdmin.className = 'py-2.5 px-3 font-industrial font-extrabold text-base uppercase tracking-wider border-2 bg-input text-zinc-300 border-zinc-700 cursor-pointer';
+        picker.classList.remove('hidden');
+        populateMemberDropdowns();
+        fillLoginMemberCredentials(currentMemberId);
+      }
+    }
+
+    function fillLoginMemberCredentials(memberId) {
+      currentMemberId = parseInt(memberId, 10);
+      const m = members.find(item => item.id === currentMemberId);
+      if (m) {
+        document.getElementById('login-email').value = m.email;
+        document.getElementById('login-password').value = m.password;
+      }
+      document.getElementById('proto-member-select').value = currentMemberId;
+    }
+
+    function handleLogin() {
+      const emailVal = document.getElementById('login-email').value.trim().toLowerCase();
+
+      if (loginSelectedRole === 'admin' || emailVal === 'yasin.avci@crossfit.com') {
+        quickSwitchRole('admin');
+      } else {
+        const found = members.find(m => m.email.toLowerCase() === emailVal && m.status === 'Active');
+        if (found) currentMemberId = found.id;
+        quickSwitchRole('member');
+      }
+    }
+
+    function quickSwitchRole(role) {
+      currentRole = role;
+      const btnAdmin = document.getElementById('proto-btn-admin');
+      const btnMember = document.getElementById('proto-btn-member');
+
+      if (role === 'admin') {
+        btnAdmin.className = 'px-2.5 py-1 font-bold uppercase border cursor-pointer bg-white text-black border-white';
+        btnMember.className = 'px-2.5 py-1 font-bold uppercase cursor-pointer text-zinc-300 hover:text-white';
+        switchScreen('slots');
+      } else {
+        btnAdmin.className = 'px-2.5 py-1 font-bold uppercase border cursor-pointer bg-zinc-800 text-zinc-300 border-zinc-700';
+        btnMember.className = 'px-2.5 py-1 font-bold uppercase cursor-pointer bg-emerald-500 text-black';
+        populateMemberDropdowns();
+        updateMemberHeaderInfo();
+        switchScreen('member-booking');
+      }
+    }
+
+    function changeActiveMember(memberId) {
+      currentMemberId = parseInt(memberId, 10);
+      quickSwitchRole('member');
+    }
+
+    function updateMemberHeaderInfo() {
+      const m = members.find(item => item.id === currentMemberId);
+      if (!m) return;
+      document.getElementById('member-header-name').textContent = `ÜYE PANELİ • ${m.firstName} ${m.lastName}`;
+      const ratioEl = document.getElementById('member-header-ratio');
+      ratioEl.textContent = `Kalan: ${m.remainingLessons}/${m.totalLessons}`;
+      ratioEl.className = m.remainingLessons < 0
+        ? 'bg-input border border-red-500 text-red-400 font-mono text-[11px] font-bold px-2 py-0.5'
+        : 'bg-input border border-zinc-700 text-amber-400 font-mono text-[11px] font-bold px-2 py-0.5';
+    }
+
+    // ==========================================
+    // 4. EKRAN GEÇİŞ YÖNETİMİ
+    // ==========================================
+    function switchScreen(screenName) {
+      const screens = ['login', 'slots', 'schedule', 'members', 'new-member', 'member-detail', 'member-booking'];
+      screens.forEach(s => {
+        document.getElementById(`screen-${s}`).classList.add('hidden');
+      });
+
+      const adminHeader = document.getElementById('admin-header');
+      const memberHeader = document.getElementById('member-header');
+
+      if (screenName === 'login') {
+        adminHeader.classList.add('hidden');
+        memberHeader.classList.add('hidden');
+      } else if (currentRole === 'admin') {
+        adminHeader.classList.remove('hidden');
+        memberHeader.classList.add('hidden');
+      } else {
+        adminHeader.classList.add('hidden');
+        memberHeader.classList.remove('hidden');
+        updateMemberHeaderInfo();
+      }
+
+      const adminNavs = {
+        slots: document.getElementById('nav-slots'),
+        schedule: document.getElementById('nav-schedule'),
+        members: document.getElementById('nav-members')
+      };
+      Object.values(adminNavs).forEach(btn => {
+        btn.className = 'bg-input text-zinc-300 hover:border-white font-bold text-xs uppercase px-3 py-2 border border-zinc-700 cursor-pointer';
+      });
+      if (screenName === 'slots') {
+        adminNavs.slots.className = 'bg-white text-black font-bold text-xs uppercase px-3 py-2 border border-white cursor-pointer';
+        renderGrid();
+      }
+      if (screenName === 'schedule') {
+        adminNavs.schedule.className = 'bg-white text-black font-bold text-xs uppercase px-3 py-2 border border-white cursor-pointer';
+        renderSchedule();
+      }
+      if (['members', 'new-member'].includes(screenName) || (screenName === 'member-detail' && currentRole === 'admin')) {
+        adminNavs.members.className = 'bg-white text-black font-bold text-xs uppercase px-3 py-2 border border-white cursor-pointer';
+        if (screenName === 'members') renderMembersList();
+      }
+
+      const memberNavBooking = document.getElementById('nav-member-booking');
+      const memberNavProfile = document.getElementById('nav-member-profile');
+      memberNavBooking.className = 'bg-input text-zinc-300 hover:border-white font-bold text-xs uppercase px-3 py-2 border border-zinc-700 cursor-pointer';
+      memberNavProfile.className = 'bg-input text-zinc-300 hover:border-white font-bold text-xs uppercase px-3 py-2 border border-zinc-700 cursor-pointer';
+
+      if (screenName === 'member-booking') {
+        memberNavBooking.className = 'bg-white text-black font-bold text-xs uppercase px-3 py-2 border border-white cursor-pointer';
+        renderMemberBookingScreen();
+      }
+      if (screenName === 'member-detail' && currentRole === 'member') {
+        memberNavProfile.className = 'bg-white text-black font-bold text-xs uppercase px-3 py-2 border border-white cursor-pointer';
+      }
+
+      document.getElementById(`screen-${screenName}`).classList.remove('hidden');
+      window.scrollTo(0, 0);
+    }
+
+    // ==========================================
+    // 5. BOŞ SAAT GİRİŞİ FONKSİYONLARI (YASİN HOCA)
+    // ==========================================
+    function renderGrid() {
+      const grid = document.getElementById('slots-grid');
+      grid.innerHTML = '';
+
+      timeSlots.forEach((slot) => {
+        const boxClasses = slot.selected
+          ? 'bg-zinc-800/90 border-2 border-white text-white'
+          : 'bg-panel border border-zinc-800 text-zinc-500 hover:border-zinc-600';
+
+        const timeTextClasses = slot.selected ? 'text-white font-extrabold' : 'text-zinc-400 font-semibold';
+
+        const badgeHtml = slot.selected
+          ? (slot.isShared 
+              ? `<span class="bg-amber-500 text-black text-[10px] font-extrabold px-1.5 py-0.5 uppercase">ORTAK (2K)</span>`
+              : `<span class="bg-white text-black text-[10px] font-extrabold px-1.5 py-0.5 uppercase">ÖZEL (1K)</span>`)
+          : `<span class="bg-zinc-900 text-zinc-500 text-[10px] font-bold px-1.5 py-0.5 uppercase">KAPALI</span>`;
+
+        const card = document.createElement('div');
+        card.className = `${boxClasses} flex flex-col justify-between select-none`;
+
+        card.innerHTML = `
+          <div onclick="toggleSlot(${slot.id})" class="p-3 cursor-pointer">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400">SAAT</span>
+              ${badgeHtml}
+            </div>
+            <div class="font-industrial text-lg sm:text-2xl tracking-wide ${timeTextClasses}">
+              ${slot.label}
+            </div>
+          </div>
+          <label class="border-t ${slot.selected ? 'border-zinc-700 bg-input' : 'border-zinc-800/80 bg-input/60'} px-3 py-2 flex items-center gap-2 cursor-pointer">
+            <input 
+              type="checkbox" 
+              ${slot.isShared ? 'checked' : ''} 
+              onchange="toggleShared(${slot.id}, this.checked)"
+              class="w-3.5 h-3.5 cursor-pointer"
+            />
+            <span class="text-[11px] sm:text-xs font-medium ${slot.isShared ? 'text-amber-400 font-bold' : 'text-zinc-400'}">
+              Ortak Ders Saati
+            </span>
+          </label>
+        `;
+        grid.appendChild(card);
+      });
+
+      const selectedSlots = timeSlots.filter(s => s.selected);
+      document.getElementById('summary-total').textContent = selectedSlots.length;
+      document.getElementById('summary-private').textContent = selectedSlots.filter(s => !s.isShared).length;
+      document.getElementById('summary-shared').textContent = selectedSlots.filter(s => s.isShared).length;
+    }
+
+    function toggleSlot(id) {
+      const slot = timeSlots.find(s => s.id === id);
+      slot.selected = !slot.selected;
+      if (!slot.selected) {
+        slot.isShared = false;
+        slot.bookings = [];
+      }
+      renderGrid();
+    }
+
+    function toggleShared(id, isChecked) {
+      const slot = timeSlots.find(s => s.id === id);
+      slot.isShared = isChecked;
+      if (isChecked && !slot.selected) slot.selected = true;
+      renderGrid();
+    }
+
+    function openSlotConfirmModal() {
+      const selectedSlots = timeSlots.filter(s => s.selected);
+      const listEl = document.getElementById('modal-selected-list');
+      if (selectedSlots.length === 0) {
+        listEl.innerHTML = `<div class="text-red-400">Hiçbir boş saat seçmediniz.</div>`;
+      } else {
+        listEl.innerHTML = selectedSlots.map(s => `
+          <div class="flex justify-between border-b border-zinc-800 py-1">
+            <span>${s.label}</span>
+            <span class="${s.isShared ? 'text-amber-400 font-bold' : 'text-zinc-400'}">
+              ${s.isShared ? 'Ortak Ders (2 Kişi)' : 'Özel Ders (1 Kişi)'}
+            </span>
+          </div>
+        `).join('');
+      }
+      document.getElementById('slot-confirm-modal').classList.remove('hidden');
+    }
+
+    function confirmSaveSlots() {
+      closeModal('slot-confirm-modal');
+      showToast('SAATLER KAYDEDİLDİ', 'Ertesi güne ait boş ders saatleri başarıyla sisteme kaydedildi. Üye rolüne geçerek bu saatleri seçebilirsiniz.');
+    }
+
+    // ==========================================
+    // 6. BUGÜNKÜ PROGRAM EKRANI (YASİN HOCA)
+    // ==========================================
+    function renderSchedule() {
+      const container = document.getElementById('schedule-list');
+      container.innerHTML = '';
+
+      todaySchedule.forEach(item => {
+        let displayHtml = '';
+        let borderClass = 'border-zinc-800';
+        let badgeHtml = '';
+
+        if (item.type === 'private_active') {
+          const m = item.members[0];
+          displayHtml = `<span class="text-white font-bold">${m.name}</span> <span class="text-zinc-400 font-mono font-semibold">- ${m.lessonProgress}</span>`;
+          borderClass = 'border-zinc-800';
+          badgeHtml = `<span class="bg-white text-black font-industrial text-base sm:text-lg font-extrabold px-3.5 py-1 uppercase tracking-wider inline-block">ÖZEL DERS</span>`;
+        } 
+        else if (item.type === 'private_cancelled') {
+          const m = item.members[0];
+          displayHtml = `<span class="text-zinc-200 font-bold">${m.name}</span> <span class="text-red-400 font-mono font-semibold">- ${m.lessonProgress}</span>`;
+          borderClass = 'border-red-600/80';
+          badgeHtml = `<span class="bg-red-600 text-white font-industrial text-base sm:text-lg font-extrabold px-3.5 py-1 uppercase tracking-wider inline-block">İPTAL</span>`;
+        } 
+        else if (item.type === 'shared_active' || item.type === 'shared_partial_cancel') {
+          const m1 = item.members[0];
+          const m2 = item.members[1];
+          
+          const m1Html = m1.cancelled 
+            ? `<span class="line-through text-red-400/80 decoration-2">${m1.name} - ${m1.lessonProgress}</span>` 
+            : `<span class="text-white font-bold">${m1.name}</span> <span class="text-zinc-400 font-mono font-semibold">- ${m1.lessonProgress}</span>`;
+          
+          const m2Html = m2.cancelled 
+            ? `<span class="line-through text-red-400/80 decoration-2">${m2.name} - ${m2.lessonProgress}</span>` 
+            : `<span class="text-white font-bold">${m2.name}</span> <span class="text-zinc-400 font-mono font-semibold">- ${m2.lessonProgress}</span>`;
+
+          displayHtml = `${m1Html} <span class="text-zinc-500 font-bold mx-1">&amp;</span> ${m2Html}`;
+          borderClass = 'border-zinc-800';
+          badgeHtml = `<span class="bg-amber-500 text-black font-industrial text-base sm:text-lg font-extrabold px-3.5 py-1 uppercase tracking-wider inline-block">ORTAK DERS</span>`;
+        }
+
+        const row = document.createElement('div');
+        row.className = `bg-panel border-2 ${borderClass} p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3`;
+        row.innerHTML = `
+          <div class="flex items-center gap-4">
+            <div class="bg-input border border-zinc-800 px-3 py-2 font-industrial text-xl font-extrabold text-white tracking-wider min-w-[125px] text-center">
+              ${item.hour}
+            </div>
+            <div class="text-sm sm:text-base">
+              ${displayHtml}
+            </div>
+          </div>
+          <div class="self-start sm:self-center shrink-0">
+            ${badgeHtml}
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    // ==========================================
+    // 7. ÜYELER LİSTESİ & YENİ ÜYE & DETAY
+    // ==========================================
+    function renderMembersList() {
+      const container = document.getElementById('members-list-container');
+      const activeMembers = members.filter(m => m.status === 'Active');
+      document.getElementById('active-member-count').textContent = activeMembers.length;
+      populateMemberDropdowns();
+
+      container.innerHTML = '';
+
+      if (activeMembers.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-zinc-500 text-sm">Aktif statüde kayıtlı üye bulunmamaktadır.</div>`;
+        return;
+      }
+
+      activeMembers.forEach(member => {
+        const ratioClass = member.remainingLessons <= 0 ? 'text-red-500' : 'text-amber-400';
+
+        const row = document.createElement('div');
+        row.className = 'grid grid-cols-12 items-center px-4 py-3.5 hover:bg-zinc-800/40';
+        row.innerHTML = `
+          <div class="col-span-5 sm:col-span-5">
+            <div class="font-bold text-white text-sm sm:text-base">${member.firstName} ${member.lastName}</div>
+            <div class="text-[11px] text-zinc-400 font-mono">${member.phone || 'Telefon Yok'}</div>
+          </div>
+
+          <div class="col-span-3 sm:col-span-3 text-center">
+            <span class="font-industrial text-2xl font-extrabold ${ratioClass} tracking-wider">
+              ${member.remainingLessons}/${member.totalLessons}
+            </span>
+          </div>
+
+          <div class="col-span-4 sm:col-span-4 flex items-center justify-end gap-1.5 sm:gap-2">
+            <button 
+              type="button"
+              onclick="openRenewModal(${member.id})" 
+              title="Paketi Yenile"
+              class="bg-input hover:bg-amber-500 hover:text-black text-amber-400 border border-zinc-700 p-2 cursor-pointer flex items-center gap-1 text-xs font-bold uppercase"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="square" stroke-linejoin="miter" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span class="hidden md:inline">Yenile</span>
+            </button>
+
+            <button 
+              type="button"
+              onclick="openMemberDetail(${member.id})" 
+              title="Üye Detay"
+              class="bg-input hover:bg-white hover:text-black text-white border border-zinc-700 p-2 cursor-pointer flex items-center gap-1 text-xs font-bold uppercase"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="square" stroke-linejoin="miter" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="square" stroke-linejoin="miter" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <span class="hidden md:inline">Detay</span>
+            </button>
+
+            <button 
+              type="button"
+              onclick="openDeleteMemberModal(${member.id})" 
+              title="Üyeyi Sil (Pasife Al)"
+              class="bg-input hover:bg-red-600 hover:text-white text-red-500 border border-zinc-700 p-2 cursor-pointer flex items-center gap-1 text-xs font-bold uppercase"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="square" stroke-linejoin="miter" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span class="hidden md:inline">Sil</span>
+            </button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function openNewMemberScreen() {
+      document.getElementById('nm-firstname').value = '';
+      document.getElementById('nm-lastname').value = '';
+      document.getElementById('nm-phone').value = '';
+      document.getElementById('nm-email').value = '';
+      document.getElementById('nm-total').value = '12';
+      document.getElementById('nm-completed').value = '0';
+      document.getElementById('nm-password').value = '';
+      document.getElementById('nm-phone-error').classList.add('hidden');
+      switchScreen('new-member');
+    }
+
+    function generatePassword() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let pass = '';
+      for (let i = 0; i < 8; i++) {
+        pass += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      document.getElementById('nm-password').value = pass;
+    }
+
+    function handleNewMemberSubmit() {
+      const firstName = document.getElementById('nm-firstname').value.trim();
+      const lastName = document.getElementById('nm-lastname').value.trim();
+      const email = document.getElementById('nm-email').value.trim();
+      const phoneInput = document.getElementById('nm-phone');
+
+      if (!firstName || !lastName || !email) {
+        alert('Lütfen Ad, Soyad ve E-Posta alanlarını doldurunuz.');
+        return;
+      }
+
+      handlePhoneBlur(phoneInput);
+
+      if (!isValidTurkishMobile(phoneInput.value)) {
+        document.getElementById('nm-phone-error').classList.remove('hidden');
+        phoneInput.focus();
+        return;
+      }
+
+      const pass = document.getElementById('nm-password').value;
+      if (!pass) {
+        alert('Lütfen önce "Şifre Üret" butonuna tıklayarak şifre oluşturunuz.');
+        return;
+      }
+      document.getElementById('new-member-confirm-modal').classList.remove('hidden');
+    }
+
+    function confirmCreateMember() {
+      const firstName = document.getElementById('nm-firstname').value.trim();
+      const lastName = document.getElementById('nm-lastname').value.trim();
+      const phone = document.getElementById('nm-phone').value.trim();
+      const email = document.getElementById('nm-email').value.trim();
+      const total = Math.min(99, Math.max(0, parseInt(document.getElementById('nm-total').value, 10) || 0));
+      const completed = Math.min(99, Math.max(0, parseInt(document.getElementById('nm-completed').value, 10) || 0));
+      const remaining = total - completed;
+      const password = document.getElementById('nm-password').value;
+
+      const newId = members.length > 0 ? Math.max(...members.map(m => m.id)) + 1 : 1;
+      members.push({
+        id: newId,
+        firstName,
+        lastName,
+        phone,
+        email,
+        totalLessons: total,
+        completedLessons: completed,
+        remainingLessons: remaining,
+        password,
+        status: 'Active'
+      });
+
+      closeModal('new-member-confirm-modal');
+      populateMemberDropdowns();
+      switchScreen('members');
+      showToast('ÜYE KAYDEDİLDİ', `${firstName} ${lastName} "Aktif" statüyle eklendi ve giriş şifresi (${password}) e-posta adresine gönderildi.`);
+    }
+
+    function openMemberDetail(id) {
+      selectedMemberId = id;
+      const m = members.find(item => item.id === id);
+      if (!m) return;
+
+      populateMemberDetailFields(m);
+      setMemberDetailEditState(false);
+
+      if (currentRole === 'member') {
+        document.getElementById('detail-view-actions').classList.add('hidden');
+        document.getElementById('detail-back-btn').textContent = '← Ders Seçimine Dön';
+      } else {
+        document.getElementById('detail-view-actions').classList.remove('hidden');
+        document.getElementById('detail-back-btn').textContent = '← Listeye Dön';
+      }
+
+      switchScreen('member-detail');
+    }
+
+    function openCurrentMemberProfile() {
+      openMemberDetail(currentMemberId);
+    }
+
+    function handleDetailBack() {
+      if (currentRole === 'member') {
+        switchScreen('member-booking');
+      } else {
+        switchScreen('members');
+      }
+    }
+
+    function populateMemberDetailFields(m) {
+      document.getElementById('detail-header-name').textContent = `${m.firstName} ${m.lastName}`;
+      const ratioEl = document.getElementById('detail-lesson-ratio');
+      ratioEl.textContent = `${m.remainingLessons}/${m.totalLessons}`;
+      ratioEl.className = m.remainingLessons <= 0
+        ? 'font-industrial text-4xl font-extrabold text-red-500 tracking-wider'
+        : 'font-industrial text-4xl font-extrabold text-amber-400 tracking-wider';
+
+      document.getElementById('det-firstname').value = m.firstName;
+      document.getElementById('det-lastname').value = m.lastName;
+      document.getElementById('det-phone').value = m.phone;
+      document.getElementById('det-email').value = m.email;
+      document.getElementById('det-total').value = m.totalLessons;
+      document.getElementById('det-completed').value = m.completedLessons;
+      document.getElementById('det-remaining').value = m.remainingLessons;
+      document.getElementById('det-password').value = m.password;
+    }
+
+    function setMemberDetailEditState(isEditing) {
+      const editableIds = ['det-firstname', 'det-lastname', 'det-phone', 'det-email', 'det-total', 'det-completed'];
+      editableIds.forEach(id => {
+        const el = document.getElementById(id);
+        el.disabled = !isEditing;
+        if (isEditing) {
+          el.classList.remove('border-zinc-800');
+          el.classList.add('border-amber-500');
+        } else {
+          el.classList.add('border-zinc-800');
+          el.classList.remove('border-amber-500');
+        }
+      });
+
+      document.getElementById('detail-mode-badge').textContent = isEditing ? 'ÜYE BİLGİLERİNİ GÜNCELLEME MODU' : 'ÜYE PROFİL DETAYI';
+      if (currentRole === 'admin') {
+        document.getElementById('detail-view-actions').classList.toggle('hidden', isEditing);
+        document.getElementById('detail-edit-actions').classList.toggle('hidden', !isEditing);
+      }
+    }
+
+    function enableMemberEditMode() {
+      setMemberDetailEditState(true);
+    }
+
+    function cancelMemberEditMode() {
+      const m = members.find(item => item.id === selectedMemberId);
+      if (m) populateMemberDetailFields(m);
+      setMemberDetailEditState(false);
+    }
+
+    function saveMemberChanges() {
+      const m = members.find(item => item.id === selectedMemberId);
+      if (!m) return;
+
+      const phoneEl = document.getElementById('det-phone');
+      handlePhoneBlur(phoneEl);
+      if (!isValidTurkishMobile(phoneEl.value)) {
+        alert('Telefon numarası 05 ile başlamalı ve 11 haneli olmalıdır.');
+        phoneEl.focus();
+        return;
+      }
+
+      m.firstName = document.getElementById('det-firstname').value.trim();
+      m.lastName = document.getElementById('det-lastname').value.trim();
+      m.phone = phoneEl.value.trim();
+      m.email = document.getElementById('det-email').value.trim();
+      m.totalLessons = Math.min(99, Math.max(0, parseInt(document.getElementById('det-total').value, 10) || 0));
+      m.completedLessons = Math.min(99, Math.max(0, parseInt(document.getElementById('det-completed').value, 10) || 0));
+      m.remainingLessons = m.totalLessons - m.completedLessons;
+
+      populateMemberDetailFields(m);
+      setMemberDetailEditState(false);
+      populateMemberDropdowns();
+      showToast('BİLGİLER GÜNCELLENDİ', 'Üye bilgileri Member tablosunda başarıyla güncellendi.');
+    }
+
+    function openDeleteMemberModal(memberId) {
+      deleteTargetMemberId = memberId;
+      const m = members.find(item => item.id === memberId);
+      if (!m) return;
+      document.getElementById('delete-member-name').textContent = `${m.firstName} ${m.lastName}`;
+      document.getElementById('delete-member-modal').classList.remove('hidden');
+    }
+
+    function confirmDeleteMember() {
+      const m = members.find(item => item.id === deleteTargetMemberId);
+      if (m) m.status = 'Passive';
+      closeModal('delete-member-modal');
+      populateMemberDropdowns();
+      switchScreen('members');
+      showToast('ÜYE PASİFE ALINDI', `${m.firstName} ${m.lastName} adlı üyenin statüsü "Pasif" olarak güncellendi.`);
+    }
+
+    function openRenewModal(memberId) {
+      renewTargetMemberId = memberId;
+      const m = members.find(item => item.id === memberId);
+      if (!m) return;
+
+      document.getElementById('renew-member-name').textContent = `${m.firstName} ${m.lastName}`;
+      document.getElementById('renew-total-input').value = m.totalLessons;
+      document.getElementById('renew-package-modal').classList.remove('hidden');
+    }
+
+    function confirmRenewPackage() {
+      const m = members.find(item => item.id === renewTargetMemberId);
+      const rawVal = document.getElementById('renew-total-input').value;
+      if (rawVal === '') {
+        alert('Lütfen 0-99 arasında bir ders sayısı giriniz.');
+        return;
+      }
+      const newTotal = Math.min(99, Math.max(0, parseInt(rawVal, 10)));
+      if (m) {
+        m.totalLessons = newTotal;
+        m.remainingLessons = newTotal;
+        m.completedLessons = 0;
+      }
+      closeModal('renew-package-modal');
+      renderMembersList();
+      showToast('PAKET YENİLENDİ', `${m.firstName} ${m.lastName} için ders paketi ${newTotal}/${newTotal} olarak güncellendi.`);
+    }
+
+
+    // =========================================================
+    // 8. ÜYE - DERS SAATİ SEÇİM, DEĞİŞTİRME VE İPTAL FONKSİYONLARI
+    // =========================================================
+    function setMemberSimMode(mode) {
+      memberSimMode = mode;
+      renderMemberBookingScreen();
+    }
+
+    function getMemberCurrentBookingSlot(memberId) {
+      return timeSlots.find(s => s.bookings.some(b => b.memberId === memberId && b.status === 'booked')) || null;
+    }
+
+    function renderMemberBookingScreen() {
+      const m = members.find(item => item.id === currentMemberId);
+      if (!m) return;
+
+      updateMemberHeaderInfo();
+      const bookingRatioEl = document.getElementById('member-booking-ratio');
+      bookingRatioEl.textContent = `${m.remainingLessons}/${m.totalLessons}`;
+      bookingRatioEl.className = m.remainingLessons <= 0
+        ? 'font-industrial text-2xl text-red-500 tracking-wider'
+        : 'font-industrial text-2xl text-amber-400 tracking-wider';
+
+      const modes = ['BEFORE_20', 'NO_SLOTS', 'OPEN_WINDOW', 'AFTER_MIDNIGHT'];
+      modes.forEach(modeKey => {
+        const btn = document.getElementById(`sim-btn-${modeKey}`);
+        if (modeKey === memberSimMode) {
+          btn.className = 'p-2 border-2 border-amber-500 bg-zinc-800 text-white text-left cursor-pointer';
+        } else {
+          btn.className = 'p-2 border border-zinc-700 bg-input text-zinc-400 hover:text-white text-left cursor-pointer';
+        }
+      });
+
+      const stateBefore20 = document.getElementById('member-state-before20');
+      const stateNoSlots = document.getElementById('member-state-noslots');
+      const stateOpen = document.getElementById('member-state-open');
+      const stateAfterMidnight = document.getElementById('member-state-aftermidnight');
+      const activeResBox = document.getElementById('member-active-reservation-box');
+
+      stateBefore20.classList.add('hidden');
+      stateNoSlots.classList.add('hidden');
+      stateOpen.classList.add('hidden');
+      stateAfterMidnight.classList.add('hidden');
+      activeResBox.classList.add('hidden');
+
+      const currentSlot = getMemberCurrentBookingSlot(currentMemberId);
+
+      if (currentSlot && (memberSimMode === 'OPEN_WINDOW' || memberSimMode === 'AFTER_MIDNIGHT')) {
+        activeResBox.classList.remove('hidden');
+        const lessonTypeLabel = currentSlot.isShared ? 'ORTAK DERS (2 KİŞİLİK)' : 'ÖZEL DERS (1 KİŞİLİK)';
+        const cancelNotice = memberSimMode === 'AFTER_MIDNIGHT'
+          ? 'Saat 23:59 geçtiği için iptal etmeniz durumunda ders yapılmış sayılacak ve kalan dersiniz iade edilmeyecektir.'
+          : 'Günde maksimum 1 ders seçebilirsiniz. Saat 23:59\'a kadar aşağıdaki boş saatlerden birine tıklayarak mevcut saatinizi değiştirebilir veya dersinizden vazgeçebilirsiniz.';
+
+        activeResBox.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="bg-emerald-500 text-black text-[10px] font-extrabold px-2 py-0.5 uppercase">SEÇİLMİŞ DERSİNİZ</span>
+                <span class="text-xs font-bold text-amber-400 uppercase">${lessonTypeLabel}</span>
+              </div>
+              <div class="font-industrial text-3xl font-extrabold text-white tracking-wider">
+                ${currentSlot.label}
+              </div>
+              <p class="text-xs text-zinc-400 mt-1">${cancelNotice}</p>
+            </div>
+            <button 
+              type="button"
+              onclick="openMemberCancelModal()" 
+              class="bg-red-600 hover:bg-red-700 text-white font-industrial font-extrabold text-lg uppercase px-5 py-2.5 tracking-wider cursor-pointer shrink-0"
+            >
+              DERSTEN VAZGEÇ (İPTAL ET)
+            </button>
+          </div>
+        `;
+      }
+
+      if (memberSimMode === 'BEFORE_20') {
+        stateBefore20.classList.remove('hidden');
+        return;
+      }
+
+      const coachEnteredSlots = timeSlots.filter(s => s.selected);
+      if (memberSimMode === 'NO_SLOTS' || coachEnteredSlots.length === 0) {
+        stateNoSlots.classList.remove('hidden');
+        return;
+      }
+
+      if (memberSimMode === 'AFTER_MIDNIGHT') {
+        stateAfterMidnight.classList.remove('hidden');
+        return;
+      }
+
+      stateOpen.classList.remove('hidden');
+      const grid = document.getElementById('member-available-slots-grid');
+      grid.innerHTML = '';
+
+      const availableSlots = coachEnteredSlots.filter(slot => {
+        const activeCount = slot.bookings.filter(b => b.status === 'booked').length;
+        const maxCap = slot.isShared ? 2 : 1;
+        const isPickedByMe = slot.bookings.some(b => b.memberId === currentMemberId && b.status === 'booked');
+        return activeCount < maxCap && !isPickedByMe;
+      });
+
+      if (availableSlots.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-3 bg-panel border border-zinc-800 p-8 text-center text-zinc-400 text-sm">
+            Şu an için seçilebilir başka boş ders saati bulunmamaktadır.
+          </div>
+        `;
+        return;
+      }
+
+      const hasExistingBooking = Boolean(currentSlot);
+      document.getElementById('member-grid-instruction').innerHTML = hasExistingBooking
+        ? `* Ertesi gün için <strong>1 ders hakkınızı</strong> kullandınız (${currentSlot.label}). Saatinizi değiştirmek için aşağıdaki boş saatlerden birini seçebilirsiniz.`
+        : `* Müsait bir saat diliminde <strong>"SEÇ"</strong> butonuna tıklayarak ertesi gün için dersinizi atayabilirsiniz.`;
+
+      availableSlots.forEach(slot => {
+        const activeCount = slot.bookings.filter(b => b.status === 'booked').length;
+        const maxCap = slot.isShared ? 2 : 1;
+        const remainingSpots = maxCap - activeCount;
+
+        const badgeHtml = slot.isShared
+          ? `<span class="bg-amber-500 text-black text-[10px] font-extrabold px-2 py-0.5 uppercase">ORTAK DERS • ${remainingSpots}/${maxCap} MÜSAİT</span>`
+          : `<span class="bg-white text-black text-[10px] font-extrabold px-2 py-0.5 uppercase">ÖZEL DERS</span>`;
+
+        const borderClass = slot.isShared ? 'border-amber-500/70' : 'border-zinc-700';
+        const actionBtnLabel = hasExistingBooking ? 'BU SAAT İLE DEĞİŞTİR' : 'SEÇ';
+
+        const card = document.createElement('div');
+        card.className = `bg-panel border-2 ${borderClass} p-4 flex flex-col justify-between gap-4`;
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-mono uppercase text-zinc-400">MÜSAİT SAAT</span>
+              ${badgeHtml}
+            </div>
+            <div class="font-industrial text-3xl font-extrabold text-white tracking-wider">
+              ${slot.label}
+            </div>
+          </div>
+
+          <button 
+            type="button"
+            onclick="openMemberBookModal(${slot.id})" 
+            class="w-full ${slot.isShared ? 'bg-amber-500 hover:bg-amber-400 text-black' : 'bg-white hover:bg-zinc-200 text-black'} font-industrial font-extrabold text-lg uppercase py-2.5 tracking-wider cursor-pointer"
+          >
+            ${actionBtnLabel}
+          </button>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function openMemberBookModal(slotId) {
+      const m = members.find(item => item.id === currentMemberId);
+      const targetSlot = timeSlots.find(s => s.id === slotId);
+      const currentSlot = getMemberCurrentBookingSlot(currentMemberId);
+      if (!m || !targetSlot) return;
+
+      pendingBookingSlotId = slotId;
+      document.getElementById('book-modal-title').textContent = targetSlot.label;
+
+      if (currentSlot) {
+        document.getElementById('book-modal-badge').textContent = 'DERS SAATİ DEĞİŞTİRME ONAYI';
+        document.getElementById('book-modal-desc').textContent = `Mevcut ${currentSlot.label} ders saatiniz, ${targetSlot.label} (${targetSlot.isShared ? 'Ortak Ders' : 'Özel Ders'}) ile değiştirilecektir. Onaylıyor musunuz?`;
+      } else {
+        document.getElementById('book-modal-badge').textContent = 'DERS SAATİ SEÇİM ONAYI';
+        const negativeNotice = m.remainingLessons <= 0
+          ? ` (Paketinizdeki dersler tamamlandığı için bakiyeniz ${m.remainingLessons - 1}/${m.totalLessons} olarak eksiye düşecektir.)`
+          : '';
+        document.getElementById('book-modal-desc').textContent = `Ertesi gün için ${targetSlot.label} (${targetSlot.isShared ? 'Ortak Ders' : 'Özel Ders'}) saati tarafınıza atanacaktır.${negativeNotice} Onaylıyor musunuz?`;
+      }
+
+      document.getElementById('member-book-confirm-modal').classList.remove('hidden');
+    }
+
+    function confirmMemberBooking() {
+      const m = members.find(item => item.id === currentMemberId);
+      const targetSlot = timeSlots.find(s => s.id === pendingBookingSlotId);
+      const currentSlot = getMemberCurrentBookingSlot(currentMemberId);
+      if (!m || !targetSlot) return;
+
+      if (currentSlot) {
+        currentSlot.bookings = currentSlot.bookings.filter(b => b.memberId !== currentMemberId);
+        targetSlot.bookings.push({ memberId: currentMemberId, status: 'booked' });
+        closeModal('member-book-confirm-modal');
+        renderMemberBookingScreen();
+        showToast('DERS SAATİ DEĞİŞTİRİLDİ', `Eski saatiniz (${currentSlot.label}) boşa çıkarıldı ve yeni ders saatiniz ${targetSlot.label} olarak güncellendi.`);
+      } else {
+        targetSlot.bookings.push({ memberId: currentMemberId, status: 'booked' });
+        m.remainingLessons = m.remainingLessons - 1;
+        m.completedLessons += 1;
+        closeModal('member-book-confirm-modal');
+        renderMemberBookingScreen();
+        showToast('DERS SAATİ ATANDI', `${targetSlot.label} ders saati adınıza kaydedildi. Güncel ders durumunuz: ${m.remainingLessons}/${m.totalLessons}`);
+      }
+    }
+
+    function openMemberCancelModal() {
+      const currentSlot = getMemberCurrentBookingSlot(currentMemberId);
+      if (!currentSlot) return;
+
+      if (memberSimMode === 'AFTER_MIDNIGHT') {
+        document.getElementById('cancel-modal-title').textContent = `${currentSlot.label} • GEÇ İPTAL (23:59 SONRASI)`;
+        document.getElementById('cancel-modal-desc').textContent = 'Saat 23:59 geçtiği için bu dersi iptal etmeniz durumunda ders yapılmış sayılacak ve kalan ders sayınızdan 1 düşmüş olarak kalacaktır. İptal işlemini onaylıyor musunuz?';
+      } else {
+        document.getElementById('cancel-modal-title').textContent = `${currentSlot.label} • DERSTEN VAZGEÇME`;
+        document.getElementById('cancel-modal-desc').textContent = 'Seçmiş olduğunuz ders saatinden vazgeçmek üzeresiniz. Saat tekrar boşa geçecek ve ders hakkınız iade edilecektir. Onaylıyor musunuz?';
+      }
+
+      document.getElementById('member-cancel-confirm-modal').classList.remove('hidden');
+    }
+
+    function confirmMemberCancelBooking() {
+      const m = members.find(item => item.id === currentMemberId);
+      const currentSlot = getMemberCurrentBookingSlot(currentMemberId);
+      if (!m || !currentSlot) return;
+
+      if (memberSimMode === 'AFTER_MIDNIGHT') {
+        const bookingObj = currentSlot.bookings.find(b => b.memberId === currentMemberId && b.status === 'booked');
+        if (bookingObj) bookingObj.status = 'late_cancelled';
+
+        todaySchedule.unshift({
+          hour: currentSlot.label,
+          type: currentSlot.isShared ? 'shared_partial_cancel' : 'private_cancelled',
+          members: currentSlot.isShared
+            ? [
+                { name: `${m.firstName} ${m.lastName}`, lessonProgress: `${m.completedLessons}/${m.totalLessons}`, cancelled: true },
+                { name: 'Zeynep Şahin', lessonProgress: '7/12', cancelled: false }
+              ]
+            : [{ name: `${m.firstName} ${m.lastName}`, lessonProgress: `${m.completedLessons}/${m.totalLessons}`, cancelled: true }]
+        });
+
+        closeModal('member-cancel-confirm-modal');
+        renderMemberBookingScreen();
+        showToast('DERS İPTAL EDİLDİ (23:59 SONRASI)', `Dersiniz iptal edildi. 23:59 sonrası olduğu için ders yapılmış sayıldı (${m.remainingLessons}/${m.totalLessons}). Yasin Hoca'nın Bugünkü Program ekranında İPTAL olarak görüntülenebilir.`);
+      } else {
+        currentSlot.bookings = currentSlot.bookings.filter(b => b.memberId !== currentMemberId);
+        m.remainingLessons = m.remainingLessons + 1;
+        m.completedLessons = Math.max(0, m.completedLessons - 1);
+
+        closeModal('member-cancel-confirm-modal');
+        renderMemberBookingScreen();
+        showToast('DERS SEÇİMİNDEN VAZGEÇİLDİ', `${currentSlot.label} saati tekrar boşa çıkarıldı ve ders hakkınız (${m.remainingLessons}/${m.totalLessons}) korundu.`);
+      }
+    }
+
+    // ==========================================
+    // 9. YARDIMCI MODAL FONKSİYONLARI
+    // ==========================================
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function showToast(title, desc) {
+      document.getElementById('toast-title').textContent = title;
+      document.getElementById('toast-desc').textContent = desc;
+      document.getElementById('toast-modal').classList.remove('hidden');
+    }
+
+    // Başlangıç Yüklemesi
+    populateMemberDropdowns();
+    renderGrid();
+    renderSchedule();
+    renderMembersList();
+  </script>
+</body>
+</html>
