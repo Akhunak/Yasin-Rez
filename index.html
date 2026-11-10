@@ -136,31 +136,6 @@
         </p>
       </div>
 
-      <!-- GİRİŞ TÜRÜ SEÇİCİ -->
-      <div class="mb-6">
-        <label class="block text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-2">
-          GİRİŞ TÜRÜ SEÇİMİ:
-        </label>
-        <div class="grid grid-cols-2 gap-2">
-          <button 
-            type="button"
-            id="login-tab-admin"
-            onclick="selectLoginRole('admin')"
-            class="py-2.5 px-3 font-industrial font-extrabold text-base uppercase tracking-wider border-2 bg-white text-black border-white cursor-pointer"
-          >
-            YASİN AVCI (HOCA)
-          </button>
-          <button 
-            type="button"
-            id="login-tab-member"
-            onclick="selectLoginRole('member')"
-            class="py-2.5 px-3 font-industrial font-extrabold text-base uppercase tracking-wider border-2 bg-input text-zinc-300 border-zinc-700 cursor-pointer"
-          >
-            ÜYE GİRİŞİ
-          </button>
-        </div>
-      </div>
-
       <div class="space-y-5">
         <div>
           <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
@@ -176,7 +151,7 @@
 
         <div>
           <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
-            ŞİFRE (8 HANELİ ALFANÜMERİK)
+            ŞİFRE
           </label>
           <input 
             type="password" 
@@ -992,7 +967,6 @@
     // =========================================================================
     let currentRole = null;
     let currentMemberId = null;
-    let loginSelectedRole = 'admin';
     let memberSimMode = 'OPEN_WINDOW';
     let pendingBookingSlotId = null;
     let scheduleDayOffset = 0; // 0 = Bugün, 1 = Yarın
@@ -1200,31 +1174,16 @@
     }
 
     // =========================================================================
-    // 6. ROL SEÇİMİ, ŞİFRE KAYDETME & OTURUM (LOCAL STORAGE) YÖNETİMİ
+    // 6. TEK FORMLU GİRİŞ, ŞİFRE KAYDETME & OTURUM (LOCAL STORAGE) YÖNETİMİ
     // =========================================================================
-    function populateMemberDropdowns() {
-      // Güvenlik nedeniyle hızlı üye seçimi kaldırıldı
-    }
-
-    function selectLoginRole(role) {
-      loginSelectedRole = role;
-      const tabAdmin = document.getElementById('login-tab-admin');
-      const tabMember = document.getElementById('login-tab-member');
+    function loadSavedLoginCredentials() {
       const emailInput = document.getElementById('login-email');
       const passInput = document.getElementById('login-password');
       const rememberCheck = document.getElementById('login-remember-me');
-      document.getElementById('login-error-msg').classList.add('hidden');
+      const errEl = document.getElementById('login-error-msg');
+      if (errEl) errEl.classList.add('hidden');
 
-      if (role === 'admin') {
-        tabAdmin.className = 'py-2.5 px-3 font-industrial font-extrabold text-base uppercase tracking-wider border-2 bg-white text-black border-white cursor-pointer';
-        tabMember.className = 'py-2.5 px-3 font-industrial font-extrabold text-base uppercase tracking-wider border-2 bg-input text-zinc-300 border-zinc-700 cursor-pointer';
-      } else {
-        tabMember.className = 'py-2.5 px-3 font-industrial font-extrabold text-base uppercase tracking-wider border-2 bg-white text-black border-white cursor-pointer';
-        tabAdmin.className = 'py-2.5 px-3 font-industrial font-extrabold text-base uppercase tracking-wider border-2 bg-input text-zinc-300 border-zinc-700 cursor-pointer';
-      }
-
-      // Bu rol için kaydedilmiş giriş bilgisi varsa doldur, yoksa temizle
-      const savedCredsRaw = localStorage.getItem('yasinRezSavedCreds_' + role);
+      const savedCredsRaw = localStorage.getItem('yasinRezSavedCreds');
       if (savedCredsRaw) {
         try {
           const savedCreds = JSON.parse(savedCredsRaw);
@@ -1236,7 +1195,7 @@
           passInput.value = '';
         }
       } else {
-        emailInput.value = role === 'admin' ? 'yasin.avci@crossfit.com' : '';
+        emailInput.value = '';
         passInput.value = '';
       }
     }
@@ -1277,7 +1236,7 @@
 
       // "Şifreyi Kaydet" seçiliyse hem bilgileri hem aktif oturumu kaydet
       if (rememberMe) {
-        localStorage.setItem('yasinRezSavedCreds_' + roleKey, JSON.stringify({
+        localStorage.setItem('yasinRezSavedCreds', JSON.stringify({
           email: emailVal,
           password: passVal
         }));
@@ -1286,7 +1245,7 @@
           id: userRow.id
         }));
       } else {
-        localStorage.removeItem('yasinRezSavedCreds_' + roleKey);
+        localStorage.removeItem('yasinRezSavedCreds');
         localStorage.removeItem('yasinRezSession');
       }
 
@@ -1301,11 +1260,10 @@
     function logoutUser() {
       // Aktif oturumu kapat ama kullanıcı "Şifreyi Kaydet" dediyse giriş kutularında hazır beklet
       localStorage.removeItem('yasinRezSession');
-      const lastRole = currentRole || 'admin';
       currentRole = null;
       currentMemberId = null;
       switchScreen('login');
-      selectLoginRole(lastRole);
+      loadSavedLoginCredentials();
     }
 
     async function quickSwitchRole(role) {
@@ -2445,7 +2403,7 @@
           localStorage.removeItem('yasinRezSession');
         }
       }
-      selectLoginRole('admin');
+      loadSavedLoginCredentials();
       switchScreen('login');
     }
 
