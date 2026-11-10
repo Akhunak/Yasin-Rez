@@ -1419,11 +1419,12 @@
 
         const timeTextClasses = slot.selected ? 'text-white font-extrabold' : 'text-zinc-400 font-semibold';
 
-        const badgeHtml = slot.selected
-          ? (slot.isShared 
-              ? `<span class="bg-amber-500 text-black text-[10px] font-extrabold px-1.5 py-0.5 uppercase">ORTAK (2K)</span>`
-              : `<span class="bg-white text-black text-[10px] font-extrabold px-1.5 py-0.5 uppercase">ÖZEL (1K)</span>`)
-          : `<span class="bg-zinc-900 text-zinc-500 text-[10px] font-bold px-1.5 py-0.5 uppercase">KAPALI</span>`;
+        // ESKİ HALİ: "ORTAK (2K)" ve "ÖZEL (1K)" yazan kısım
+    const badgeHtml = slot.selected
+      ? (slot.isShared 
+          ? `<span class="bg-amber-500 text-black text-[10px] font-extrabold px-1.5 py-0.5 uppercase">ORTAK</span>`
+          : `<span class="bg-white text-black text-[10px] font-extrabold px-1.5 py-0.5 uppercase">ÖZEL</span>`)
+      : `<span class="bg-zinc-900 text-zinc-500 text-[10px] font-bold px-1.5 py-0.5 uppercase">KAPALI</span>`;
 
         const card = document.createElement('div');
         card.className = `${boxClasses} flex flex-col justify-between select-none`;
