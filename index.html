@@ -300,18 +300,19 @@
         <div class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-3 border-b border-zinc-800 pb-2">
           SEÇİLEN GÜN İÇİN DİP TOPLAM ÖZETİ
         </div>
-        <div class="grid grid-cols-3 gap-3 text-xs">
-          <div class="bg-input border border-zinc-800 px-3 py-2.5 text-center">
-            <span class="text-zinc-400 block font-bold uppercase text-[10px] sm:text-xs">TOPLAM SEÇİLEN</span>
-            <strong id="summary-total" class="text-2xl font-industrial font-extrabold text-white">0</strong>
+        <div class="grid grid-cols-3 gap-2 sm:gap-3 text-xs">
+          <!-- Kutulara "flex flex-col justify-between" eklendi, böylece rakamlar hep en alta yapışır -->
+          <div class="bg-input border border-zinc-800 px-2 py-2.5 text-center flex flex-col justify-between">
+            <span class="text-zinc-400 font-bold uppercase text-[10px] sm:text-xs">TOPLAM SEÇİLEN</span>
+            <strong id="summary-total" class="text-2xl font-industrial font-extrabold text-white mt-1">0</strong>
           </div>
-          <div class="bg-input border border-zinc-800 px-3 py-2.5 text-center">
-            <span class="text-zinc-400 block font-bold uppercase text-[10px] sm:text-xs">ÖZEL DERS (1K)</span>
-            <strong id="summary-private" class="text-2xl font-industrial font-extrabold text-white">0</strong>
+          <div class="bg-input border border-zinc-800 px-2 py-2.5 text-center flex flex-col justify-between">
+            <span class="text-zinc-400 font-bold uppercase text-[10px] sm:text-xs">ÖZEL DERS (1K)</span>
+            <strong id="summary-private" class="text-2xl font-industrial font-extrabold text-white mt-1">0</strong>
           </div>
-          <div class="bg-input border border-zinc-800 px-3 py-2.5 text-center">
-            <span class="text-zinc-400 block font-bold uppercase text-[10px] sm:text-xs">ORTAK DERS (2K)</span>
-            <strong id="summary-shared" class="text-2xl font-industrial font-extrabold text-amber-400">0</strong>
+          <div class="bg-input border border-zinc-800 px-2 py-2.5 text-center flex flex-col justify-between">
+            <span class="text-zinc-400 font-bold uppercase text-[10px] sm:text-xs">ORTAK DERS (2K)</span>
+            <strong id="summary-shared" class="text-2xl font-industrial font-extrabold text-amber-400 mt-1">0</strong>
           </div>
         </div>
       </div>
