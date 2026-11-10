@@ -43,7 +43,7 @@
   <div class="bg-zinc-900 border-b border-zinc-800 px-4 py-2 flex justify-between items-center text-xs">
     <div class="flex items-center gap-3">
       <span id="db-status-badge" class="bg-amber-500 text-black font-extrabold px-2 py-0.5 uppercase">
-        DB BAĞLANIYOR...
+        HAZIR
       </span>
       <span id="tr-live-clock" class="text-zinc-400 font-mono"></span>
     </div>
@@ -69,10 +69,10 @@
       
       <div class="flex flex-wrap gap-2">
         <button type="button" id="nav-slots" onclick="switchScreen('slots')" class="font-bold text-xs uppercase px-3 py-2 border cursor-pointer">
-          Saat Girişi
+          Ders Seçimi
         </button>
         <button type="button" id="nav-schedule" onclick="switchScreen('schedule')" class="font-bold text-xs uppercase px-3 py-2 border cursor-pointer">
-          Günlük Program
+          Bugünkü Program
         </button>
         <button type="button" id="nav-members" onclick="switchScreen('members')" class="font-bold text-xs uppercase px-3 py-2 border cursor-pointer">
           Üyeler
@@ -136,7 +136,7 @@
         </p>
       </div>
 
-      <!-- HIZLI GİRİŞ SEÇİCİ (TEST KOLAYLIĞI İÇİN OTOMATİK DOLDURUR) -->
+      <!-- GİRİŞ TÜRÜ SEÇİCİ -->
       <div class="mb-6">
         <label class="block text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-2">
           GİRİŞ TÜRÜ SEÇİMİ:
@@ -159,18 +159,6 @@
             ÜYE GİRİŞİ
           </button>
         </div>
-
-        <div id="login-member-picker" class="hidden mt-3 bg-input border border-zinc-700 p-3">
-          <label class="block text-[11px] font-bold uppercase text-zinc-400 mb-1.5">
-            Hızlı Üye Seçimi (Bilgileri Otomatik Doldurur):
-          </label>
-          <select 
-            id="login-member-dropdown" 
-            onchange="fillLoginMemberCredentials(this.value)"
-            class="w-full bg-panel border border-zinc-700 text-white text-xs px-2.5 py-2 outline-none font-bold cursor-pointer"
-          >
-          </select>
-        </div>
       </div>
 
       <div class="space-y-5">
@@ -181,7 +169,7 @@
           <input 
             type="email" 
             id="login-email"
-            value="yasin.avci@crossfit.com" 
+            placeholder="ornek@mail.com"
             class="w-full bg-input border-2 border-zinc-700 focus:border-white text-white px-4 py-3 text-sm outline-none font-medium"
           />
         </div>
@@ -191,12 +179,25 @@
             ŞİFRE (8 HANELİ ALFANÜMERİK)
           </label>
           <input 
-            type="text" 
+            type="password" 
             id="login-password"
-            value="YA94K28X" 
-            maxlength="8"
+            placeholder="••••••••"
             class="w-full bg-input border-2 border-zinc-700 focus:border-white text-amber-400 px-4 py-3 text-sm outline-none font-mono tracking-widest"
           />
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input 
+              type="checkbox" 
+              id="login-remember-me" 
+              checked 
+              class="w-4 h-4 cursor-pointer"
+            />
+            <span class="text-xs font-bold uppercase tracking-wider text-zinc-300">
+              Şifreyi Kaydet
+            </span>
+          </label>
         </div>
 
         <p id="login-error-msg" class="hidden text-xs text-red-400 font-bold"></p>
@@ -222,7 +223,7 @@
 
 
   <!-- ==========================================
-       EKRAN 2: BOŞ SAAT GİRİŞ EKRANI (YASİN HOCA)
+       EKRAN 2: DERS SEÇİMİ EKRANI (YASİN HOCA)
   =========================================== -->
   <section id="screen-slots" class="hidden min-h-[calc(100vh-120px)] pb-12">
     <main class="max-w-3xl mx-auto px-4 pt-6">
@@ -230,6 +231,9 @@
       <!-- ÜST TARİH VE TAKVİM SEÇİCİ KUTUSU -->
       <div class="relative bg-panel border-2 border-zinc-800 p-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
+          <div class="text-xs font-bold uppercase tracking-wider text-amber-500">
+            BOŞ SAAT BELİRLEME (08:00 - 23:00) • 7 GÜNLÜK PLANLAMA
+          </div>
           <div id="slots-selected-date-label" class="font-industrial text-2xl sm:text-3xl font-extrabold text-white mt-0.5">
             TARİH YÜKLENİYOR...
           </div>
@@ -285,16 +289,19 @@
         </div>
       </div>
 
+      <div class="mb-4 text-xs text-zinc-400">
+        * Açmak istediğiniz saat kutularına tıklayın. 2 kişilik dersler için <strong>"Ortak Ders"</strong> kutucuğunu işaretleyin.
+      </div>
+
       <!-- SAAT KUTUCUKLARI GRİDİ -->
       <div id="slots-grid" class="grid grid-cols-3 gap-2.5 sm:gap-3 mb-6"></div>
 
       <!-- DİP TOPLAM (SEÇİM ÖZETİ) BÖLÜMÜ (SAAT BLOĞUNUN EN ALTINDA) -->
       <div class="bg-panel border-2 border-zinc-800 p-4 mb-4">
         <div class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-3 border-b border-zinc-800 pb-2">
-          SEÇİM ÖZETİ
+          SEÇİLEN GÜN İÇİN DİP TOPLAM ÖZETİ
         </div>
         <div class="grid grid-cols-3 gap-2 sm:gap-3 text-xs">
-          <!-- Kutulara "flex flex-col justify-between" eklendi, böylece rakamlar hep en alta yapışır -->
           <div class="bg-input border border-zinc-800 px-2 py-2.5 text-center flex flex-col justify-between">
             <span class="text-zinc-400 font-bold uppercase text-[10px] sm:text-xs">TOPLAM SEÇİLEN</span>
             <strong id="summary-total" class="text-2xl font-industrial font-extrabold text-white mt-1">0</strong>
@@ -310,11 +317,9 @@
         </div>
       </div>
 
-      <!-- TAMAM BUTONU BLOĞU (SABİT DEĞİL, SAYFANIN EN ALTINDA YER ALIR) -->
+      <!-- TAMAM BUTONU BLOĞU -->
       <div class="bg-panel border-2 border-zinc-800 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div class="text-xs text-zinc-400">
-         
-        </div>
+        <div class="text-xs text-zinc-400"></div>
         <button 
           type="button"
           onclick="openSlotConfirmModal()" 
@@ -619,7 +624,30 @@
 
           <div>
             <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">GİRİŞ ŞİFRESİ</label>
-            <input type="text" id="det-password" disabled class="w-full bg-zinc-900 border-2 border-zinc-800 text-zinc-400 px-3 py-2.5 text-sm font-mono tracking-widest outline-none" />
+            <div class="flex gap-2">
+              <input 
+                type="password" 
+                id="det-password" 
+                disabled 
+                class="w-full bg-zinc-900 border-2 border-zinc-800 text-amber-400 px-3 py-2.5 text-sm font-mono tracking-widest outline-none" 
+              />
+              <button 
+                type="button" 
+                id="det-btn-toggle-pass"
+                onclick="toggleDetailPasswordVisibility()" 
+                class="bg-zinc-800 hover:bg-zinc-700 text-white border-2 border-zinc-600 font-industrial font-bold text-base uppercase px-4 py-2 whitespace-nowrap cursor-pointer"
+              >
+                GÖSTER
+              </button>
+              <button 
+                type="button" 
+                id="det-btn-renew-pass"
+                onclick="openRenewPasswordModal()" 
+                class="bg-amber-500 hover:bg-amber-400 text-black border-2 border-amber-500 font-industrial font-extrabold text-base uppercase px-4 py-2 whitespace-nowrap cursor-pointer"
+              >
+                YENİLE
+              </button>
+            </div>
           </div>
         </div>
 
@@ -862,7 +890,23 @@
     </div>
   </div>
 
-  <!-- 7. GENEL BİLDİRİM MODALI -->
+  <!-- 7. ÜYE ŞİFRE YENİLEME ONAY POP-UP -->
+  <div id="renew-password-confirm-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+    <div class="w-full max-w-md bg-panel border-2 border-emerald-500 p-6">
+      <h3 class="font-industrial text-2xl font-extrabold uppercase text-white border-b border-zinc-800 pb-3 mb-4">
+        ŞİFRE YENİLEME ONAYI
+      </h3>
+      <p class="text-sm text-zinc-200 mb-6">
+        Üye şifresi güncellenecektir. Onaylıyor musunuz?
+      </p>
+      <div class="grid grid-cols-2 gap-3">
+        <button type="button" onclick="closeModal('renew-password-confirm-modal')" class="bg-input text-white border-2 border-zinc-700 font-industrial font-bold text-lg uppercase py-2.5 cursor-pointer">VAZGEÇ</button>
+        <button type="button" onclick="confirmRenewMemberPassword()" class="bg-emerald-500 hover:bg-emerald-400 text-black border-2 border-emerald-500 font-industrial font-extrabold text-lg uppercase py-2.5 cursor-pointer">ONAYLA</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. GENEL BİLDİRİM MODALI -->
   <div id="toast-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
     <div class="w-full max-w-sm bg-panel border-2 border-emerald-500 p-6 text-center">
       <div class="inline-block bg-emerald-500 text-black font-bold text-xs px-2 py-1 uppercase mb-3">
@@ -881,7 +925,7 @@
 
   <script>
     // =========================================================================
-    // 1. SUPABASE BAĞLANTI AYARLARI (HAZIR TANIMLI)
+    // 1. SUPABASE BAĞLANTI AYARLARI
     // =========================================================================
     const SUPABASE_URL = 'https://hiarwdthivcmgabhhjjh.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_a_eeLPiolEV3oLSiM4ylKw_2vtlmT7j';
@@ -946,7 +990,7 @@
     // =========================================================================
     // 3. UYGULAMA DURUMU (STATE)
     // =========================================================================
-    let currentRole = 'admin';
+    let currentRole = null;
     let currentMemberId = null;
     let loginSelectedRole = 'admin';
     let memberSimMode = 'OPEN_WINDOW';
@@ -983,19 +1027,19 @@
     let timeSlots = createEmptySlotsArray();
 
     // =========================================================================
-    // 4. SUPABASE VERİ ÇEKME FONKSİYONLARI
+    // 4. SUPABASE VERİ ÇEKME FONKSİYONLARI (GÜVENLİ & KİŞİYE ÖZEL)
     // =========================================================================
-   async function loadAllDataFromSupabase() {
+    async function loadAllDataFromSupabase() {
       if (!currentRole) return; // Giriş yapılmadıysa veritabanına istek atma
+
       updateTopLiveClock();
       const badge = document.getElementById('db-status-badge');
       try {
-        // select içine 'password' yazmadığımız için şifreler ağdan GELMEZ.
         let query = supabaseClient
           .from('members')
-          .select('id, first_name, last_name, phone, email, total_lessons, completed_lessons, remaining_lessons, role, status');
+          .select('id, first_name, last_name, phone, email, password, total_lessons, completed_lessons, remaining_lessons, role, status');
 
-        // Giriş yapan kişi "üye" ise SADECE KENDİ ID'sine ait veriyi çek
+        // Giriş yapan kişi "üye" ise SADECE KENDİ ID'sine ait veriyi çek (diğer üyelerin bilgileri ve şifreleri gelmez)
         if (currentRole === 'member') {
           query = query.eq('id', currentMemberId);
         }
@@ -1010,7 +1054,7 @@
           lastName: row.last_name,
           phone: row.phone || '',
           email: row.email,
-          password: row.password,
+          password: row.password || '',
           totalLessons: row.total_lessons,
           completedLessons: row.completed_lessons,
           remainingLessons: row.remaining_lessons,
@@ -1018,12 +1062,9 @@
           status: row.status
         }));
 
-        const firstActiveMember = members.find(m => m.role === 'Member' && m.status === 'Active');
-        if (!currentMemberId && firstActiveMember) {
-          currentMemberId = firstActiveMember.id;
+        if (currentRole === 'admin') {
+          await loadAdminSlotsForDate(selectedAdminSlotDateISO);
         }
-
-        await loadAdminSlotsForDate(selectedAdminSlotDateISO);
         await loadTomorrowSlotsFromSupabase();
 
         if (badge) {
@@ -1031,9 +1072,10 @@
           badge.className = 'bg-emerald-500 text-black font-extrabold px-2 py-0.5 uppercase';
         }
 
-        populateMemberDropdowns();
-        renderGrid();
-        renderMembersList();
+        if (currentRole === 'admin') {
+          renderGrid();
+          renderMembersList();
+        }
       } catch (err) {
         console.error('Supabase bağlantı hatası:', err);
         if (badge) {
@@ -1148,61 +1190,73 @@
       return /^05\d{9}$/.test(digits);
     }
 
+    function createRandom8CharPassword() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let pass = '';
+      for (let i = 0; i < 8; i++) {
+        pass += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return pass;
+    }
+
     // =========================================================================
-    // 6. ROL SEÇİMİ & GERÇEK LOGIN YÖNETİMİ
+    // 6. ROL SEÇİMİ, ŞİFRE KAYDETME & OTURUM (LOCAL STORAGE) YÖNETİMİ
     // =========================================================================
     function populateMemberDropdowns() {
-      const activeMembers = members.filter(m => m.role === 'Member' && m.status === 'Active');
-      const loginSelect = document.getElementById('login-member-dropdown');
-
-      const optionsHtml = activeMembers.map(m => 
-        `<option value="${m.id}" ${m.id === currentMemberId ? 'selected' : ''}>${m.firstName} ${m.lastName} (${m.completedLessons}/${m.totalLessons})</option>`
-      ).join('');
-
-      if (loginSelect) loginSelect.innerHTML = optionsHtml;
+      // Güvenlik nedeniyle hızlı üye seçimi kaldırıldı
     }
 
     function selectLoginRole(role) {
       loginSelectedRole = role;
       const tabAdmin = document.getElementById('login-tab-admin');
       const tabMember = document.getElementById('login-tab-member');
-      const picker = document.getElementById('login-member-picker');
+      const emailInput = document.getElementById('login-email');
+      const passInput = document.getElementById('login-password');
+      const rememberCheck = document.getElementById('login-remember-me');
       document.getElementById('login-error-msg').classList.add('hidden');
 
       if (role === 'admin') {
         tabAdmin.className = 'py-2.5 px-3 font-industrial font-extrabold text-base uppercase tracking-wider border-2 bg-white text-black border-white cursor-pointer';
         tabMember.className = 'py-2.5 px-3 font-industrial font-extrabold text-base uppercase tracking-wider border-2 bg-input text-zinc-300 border-zinc-700 cursor-pointer';
-        picker.classList.add('hidden');
-        const adminUser = members.find(m => m.role === 'Admin');
-        document.getElementById('login-email').value = adminUser ? adminUser.email : 'yasin.avci@crossfit.com';
-        document.getElementById('login-password').value = adminUser ? adminUser.password : 'YA94K28X';
       } else {
         tabMember.className = 'py-2.5 px-3 font-industrial font-extrabold text-base uppercase tracking-wider border-2 bg-white text-black border-white cursor-pointer';
         tabAdmin.className = 'py-2.5 px-3 font-industrial font-extrabold text-base uppercase tracking-wider border-2 bg-input text-zinc-300 border-zinc-700 cursor-pointer';
-        picker.classList.remove('hidden');
-        populateMemberDropdowns();
-        if (currentMemberId) fillLoginMemberCredentials(currentMemberId);
       }
-    }
 
-    function fillLoginMemberCredentials(memberId) {
-      currentMemberId = parseInt(memberId, 10);
-      const m = members.find(item => item.id === currentMemberId);
-      if (m) {
-        document.getElementById('login-email').value = m.email;
-        document.getElementById('login-password').value = m.password;
+      // Bu rol için kaydedilmiş giriş bilgisi varsa doldur, yoksa temizle
+      const savedCredsRaw = localStorage.getItem('yasinRezSavedCreds_' + role);
+      if (savedCredsRaw) {
+        try {
+          const savedCreds = JSON.parse(savedCredsRaw);
+          emailInput.value = savedCreds.email || '';
+          passInput.value = savedCreds.password || '';
+          if (rememberCheck) rememberCheck.checked = true;
+        } catch (e) {
+          emailInput.value = '';
+          passInput.value = '';
+        }
+      } else {
+        emailInput.value = role === 'admin' ? 'yasin.avci@crossfit.com' : '';
+        passInput.value = '';
       }
     }
 
     async function handleLogin() {
       const emailVal = document.getElementById('login-email').value.trim().toLowerCase();
-      const passVal = document.getElementById('login-password').value.trim();
+      const passVal = document.getElementById('login-password').value.trim().toUpperCase();
+      const rememberMe = document.getElementById('login-remember-me').checked;
       const errEl = document.getElementById('login-error-msg');
       errEl.classList.add('hidden');
 
+      if (!emailVal || !passVal) {
+        errEl.textContent = 'Lütfen e-posta adresinizi ve şifrenizi giriniz.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
       const { data: userRow, error } = await supabaseClient
         .from('members')
-        .select('*')
+        .select('id, role, status, email')
         .ilike('email', emailVal)
         .eq('password', passVal)
         .maybeSingle();
@@ -1219,7 +1273,24 @@
         return;
       }
 
-      if (userRow.role === 'Admin') {
+      const roleKey = userRow.role === 'Admin' ? 'admin' : 'member';
+
+      // "Şifreyi Kaydet" seçiliyse hem bilgileri hem aktif oturumu kaydet
+      if (rememberMe) {
+        localStorage.setItem('yasinRezSavedCreds_' + roleKey, JSON.stringify({
+          email: emailVal,
+          password: passVal
+        }));
+        localStorage.setItem('yasinRezSession', JSON.stringify({
+          role: roleKey,
+          id: userRow.id
+        }));
+      } else {
+        localStorage.removeItem('yasinRezSavedCreds_' + roleKey);
+        localStorage.removeItem('yasinRezSession');
+      }
+
+      if (roleKey === 'admin') {
         await quickSwitchRole('admin');
       } else {
         currentMemberId = userRow.id;
@@ -1228,7 +1299,13 @@
     }
 
     function logoutUser() {
+      // Aktif oturumu kapat ama kullanıcı "Şifreyi Kaydet" dediyse giriş kutularında hazır beklet
+      localStorage.removeItem('yasinRezSession');
+      const lastRole = currentRole || 'admin';
+      currentRole = null;
+      currentMemberId = null;
       switchScreen('login');
+      selectLoginRole(lastRole);
     }
 
     async function quickSwitchRole(role) {
@@ -1238,7 +1315,6 @@
       if (role === 'admin') {
         switchScreen('slots');
       } else {
-        populateMemberDropdowns();
         updateMemberHeaderInfo();
         switchScreen('member-booking');
       }
@@ -1348,11 +1424,9 @@
       const lastMonthName = lastAllowedDate.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' }).toLocaleUpperCase('tr-TR');
       monthTitleEl.textContent = firstMonthName === lastMonthName ? firstMonthName : `${firstMonthName} / ${lastMonthName}`;
 
-      // Takvim görünümü için içinde bulunulan ayın 1'inden başlayıp (veya haftanın Pazartesi gününden) son izin verilen haftanın Pazar gününe kadar çiz
       const startOfMonth = new Date(firstAllowedDate.getFullYear(), firstAllowedDate.getMonth(), 1);
       const endOfMonth = new Date(lastAllowedDate.getFullYear(), lastAllowedDate.getMonth() + 1, 0);
 
-      // Pazartesi = 0 ... Pazar = 6 indekslemesi
       const startDayOfWeek = (startOfMonth.getDay() + 6) % 7;
       const gridStartDate = new Date(startOfMonth);
       gridStartDate.setDate(gridStartDate.getDate() - startDayOfWeek);
@@ -1416,16 +1490,15 @@
       adminTimeSlots.forEach((slot) => {
         const boxClasses = slot.selected
           ? 'bg-zinc-800/90 border-2 border-white text-white'
-          : 'bg-panel border border-zinc-800 text-zinc-500 hover:border-zinc-600';
+          : 'bg-panel border-2 border-zinc-800 text-zinc-500 hover:border-zinc-600';
 
         const timeTextClasses = slot.selected ? 'text-white font-extrabold' : 'text-zinc-400 font-semibold';
 
-        // ESKİ HALİ: "ORTAK (2K)" ve "ÖZEL (1K)" yazan kısım
-    const badgeHtml = slot.selected
-      ? (slot.isShared 
-          ? `<span class="bg-amber-500 text-black text-[10px] font-extrabold px-1.5 py-0.5 uppercase">ORTAK</span>`
-          : `<span class="bg-white text-black text-[10px] font-extrabold px-1.5 py-0.5 uppercase">ÖZEL</span>`)
-      : `<span class="bg-zinc-900 text-zinc-500 text-[10px] font-bold px-1.5 py-0.5 uppercase">KAPALI</span>`;
+        const badgeHtml = slot.selected
+          ? (slot.isShared 
+              ? `<span class="bg-amber-500 text-black text-[10px] font-extrabold px-1.5 py-0.5 uppercase">ORTAK</span>`
+              : `<span class="bg-white text-black text-[10px] font-extrabold px-1.5 py-0.5 uppercase">ÖZEL</span>`)
+          : `<span class="bg-zinc-900 text-zinc-500 text-[10px] font-bold px-1.5 py-0.5 uppercase">KAPALI</span>`;
 
         const card = document.createElement('div');
         card.className = `${boxClasses} flex flex-col justify-between select-none`;
@@ -1636,13 +1709,12 @@
     }
 
     // =========================================================================
-    // 10. ÜYELER LİSTESİ & YENİ ÜYE & DETAY (TAMAMLANAN / TOPLAM GÖSTERİMİ)
+    // 10. ÜYELER LİSTESİ & YENİ ÜYE & DETAY (GÖSTER / ONAYLI ŞİFRE YENİLEME)
     // =========================================================================
     function renderMembersList() {
       const container = document.getElementById('members-list-container');
       const activeMembers = members.filter(m => m.role === 'Member' && m.status === 'Active');
       document.getElementById('active-member-count').textContent = activeMembers.length;
-      populateMemberDropdowns();
 
       container.innerHTML = '';
 
@@ -1724,12 +1796,7 @@
     }
 
     function generatePassword() {
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      let pass = '';
-      for (let i = 0; i < 8; i++) {
-        pass += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      document.getElementById('nm-password').value = pass;
+      document.getElementById('nm-password').value = createRandom8CharPassword();
     }
 
     function handleNewMemberSubmit() {
@@ -1803,12 +1870,16 @@
       populateMemberDetailFields(m);
       setMemberDetailEditState(false);
 
+      const renewPassBtn = document.getElementById('det-btn-renew-pass');
+
       if (currentRole === 'member') {
         document.getElementById('detail-view-actions').classList.add('hidden');
         document.getElementById('detail-back-btn').textContent = '← Ders Seçimine Dön';
+        if (renewPassBtn) renewPassBtn.classList.add('hidden');
       } else {
         document.getElementById('detail-view-actions').classList.remove('hidden');
         document.getElementById('detail-back-btn').textContent = '← Listeye Dön';
+        if (renewPassBtn) renewPassBtn.classList.remove('hidden');
       }
 
       switchScreen('member-detail');
@@ -1841,7 +1912,59 @@
       document.getElementById('det-total').value = m.totalLessons;
       document.getElementById('det-completed').value = m.completedLessons;
       document.getElementById('det-remaining').value = m.remainingLessons;
-      document.getElementById('det-password').value = m.password;
+
+      const passInput = document.getElementById('det-password');
+      const toggleBtn = document.getElementById('det-btn-toggle-pass');
+      passInput.type = 'password';
+      passInput.value = m.password || '';
+      if (toggleBtn) toggleBtn.textContent = 'GÖSTER';
+    }
+
+    function toggleDetailPasswordVisibility() {
+      const passInput = document.getElementById('det-password');
+      const toggleBtn = document.getElementById('det-btn-toggle-pass');
+      if (passInput.type === 'password') {
+        passInput.type = 'text';
+        toggleBtn.textContent = 'GİZLE';
+      } else {
+        passInput.type = 'password';
+        toggleBtn.textContent = 'GÖSTER';
+      }
+    }
+
+    function openRenewPasswordModal() {
+      if (currentRole !== 'admin') return;
+      const m = members.find(item => item.id === selectedMemberId);
+      if (!m) return;
+      document.getElementById('renew-password-confirm-modal').classList.remove('hidden');
+    }
+
+    async function confirmRenewMemberPassword() {
+      if (currentRole !== 'admin') return;
+      const m = members.find(item => item.id === selectedMemberId);
+      if (!m) return;
+
+      const newPassword = createRandom8CharPassword();
+
+      const { error } = await supabaseClient
+        .from('members')
+        .update({ password: newPassword })
+        .eq('id', selectedMemberId);
+
+      if (error) {
+        alert('Şifre yenilenirken hata oluştu: ' + error.message);
+        return;
+      }
+
+      m.password = newPassword;
+      const passInput = document.getElementById('det-password');
+      const toggleBtn = document.getElementById('det-btn-toggle-pass');
+      passInput.value = newPassword;
+      passInput.type = 'text';
+      if (toggleBtn) toggleBtn.textContent = 'GİZLE';
+
+      closeModal('renew-password-confirm-modal');
+      showToast('ŞİFRE YENİLENDİ', `${m.firstName} ${m.lastName} için yeni şifre oluşturuldu ve kaydedildi: ${newPassword}`);
     }
 
     function setMemberDetailEditState(isEditing) {
@@ -2295,7 +2418,7 @@
     }
 
     // =========================================================================
-    // 12. YARDIMCI MODAL FONKSİYONLARI
+    // 12. YARDIMCI MODAL FONKSİYONLARI VE BAŞLANGIÇ KONTROLÜ
     // =========================================================================
     function closeModal(id) {
       document.getElementById(id).classList.add('hidden');
@@ -2307,8 +2430,27 @@
       document.getElementById('toast-modal').classList.remove('hidden');
     }
 
-    // Sayfa Açıldığında Supabase'den Tüm Verileri Yükle
-    loadAllDataFromSupabase();
+    // Sayfa Açıldığında Tarayıcı Hafızasını (Local Storage) Kontrol Et
+    async function initApp() {
+      updateTopLiveClock();
+      const savedSession = localStorage.getItem('yasinRezSession');
+      if (savedSession) {
+        try {
+          const sessionData = JSON.parse(savedSession);
+          currentRole = sessionData.role;
+          currentMemberId = sessionData.id;
+          await quickSwitchRole(currentRole);
+          return;
+        } catch (e) {
+          localStorage.removeItem('yasinRezSession');
+        }
+      }
+      selectLoginRole('admin');
+      switchScreen('login');
+    }
+
+    // Uygulamayı başlat
+    initApp();
   </script>
 </body>
 </html>
