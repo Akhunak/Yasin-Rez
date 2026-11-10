@@ -985,14 +985,22 @@
     // =========================================================================
     // 4. SUPABASE VERİ ÇEKME FONKSİYONLARI
     // =========================================================================
-    async function loadAllDataFromSupabase() {
+   async function loadAllDataFromSupabase() {
+      if (!currentRole) return; // Giriş yapılmadıysa veritabanına istek atma
       updateTopLiveClock();
       const badge = document.getElementById('db-status-badge');
       try {
-        const { data: membersData, error: memErr } = await supabaseClient
+        // select içine 'password' yazmadığımız için şifreler ağdan GELMEZ.
+        let query = supabaseClient
           .from('members')
-          .select('*')
-          .order('id', { ascending: true });
+          .select('id, first_name, last_name, phone, email, total_lessons, completed_lessons, remaining_lessons, role, status');
+
+        // Giriş yapan kişi "üye" ise SADECE KENDİ ID'sine ait veriyi çek
+        if (currentRole === 'member') {
+          query = query.eq('id', currentMemberId);
+        }
+
+        const { data: membersData, error: memErr } = await query.order('id', { ascending: true });
 
         if (memErr) throw memErr;
 
