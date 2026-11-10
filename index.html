@@ -1423,12 +1423,12 @@
         card.className = `${boxClasses} flex flex-col justify-between select-none`;
 
         card.innerHTML = `
-          <div onclick="toggleSlot(${slot.id})" class="p-3 cursor-pointer">
+          <div onclick="toggleSlot(${slot.id})" class="p-2 sm:p-3 cursor-pointer">
             <div class="flex items-center justify-between mb-1.5">
               <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400">SAAT</span>
               ${badgeHtml}
             </div>
-            <div class="font-industrial text-lg sm:text-2xl tracking-wide ${timeTextClasses}">
+            <div class="font-industrial text-base sm:text-2xl tracking-tight sm:tracking-wide whitespace-nowrap ${timeTextClasses}">
               ${slot.label}
             </div>
           </div>
