@@ -10,30 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- CrossFit / Endüstriyel Tema İçin Google Fonts (Barlow Condensed & Inter) -->
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      background-color: #121215;
-      color: #f4f4f5;
-      font-family: 'Inter', sans-serif;
-    }
-    .bg-panel {
-      background-color: #1a1a1f;
-    }
-    .bg-input {
-      background-color: #101013;
-    }
-    .font-industrial {
-      font-family: 'Barlow Condensed', sans-serif;
-      letter-spacing: 0.04em;
-    }
-    * {
-      transition: none !important;
-      animation: none !important;
-    }
-    input[type="checkbox"] {
-      accent-color: #f59e0b;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body class="min-h-screen selection:bg-white selection:text-black">
 
@@ -59,11 +36,11 @@
   <header id="admin-header" class="hidden bg-panel border-b-2 border-zinc-800 px-4 py-4">
     <div class="max-w-3xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <span class="text-[11px] font-bold uppercase tracking-widest text-amber-500 block">
-          YÖNETİCİ PANELİ • YASİN AVCI
+        <span id="admin-header-name" class="text-[11px] font-bold uppercase tracking-widest text-amber-500 block">
+          YASİN AVCI
         </span>
         <h1 class="font-industrial text-2xl sm:text-3xl font-extrabold uppercase text-white">
-          DERS REZERVASYON SİSTEMİ
+          REZERVASYON YÖNETİMİ
         </h1>
       </div>
       
@@ -72,7 +49,7 @@
           Ders Seçimi
         </button>
         <button type="button" id="nav-schedule" onclick="switchScreen('schedule')" class="font-bold text-xs uppercase px-3 py-2 border cursor-pointer">
-          Bugünkü Program
+          Program
         </button>
         <button type="button" id="nav-members" onclick="switchScreen('members')" class="font-bold text-xs uppercase px-3 py-2 border cursor-pointer">
           Üyeler
@@ -207,7 +184,7 @@
       <div class="relative bg-panel border-2 border-zinc-800 p-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div class="text-xs font-bold uppercase tracking-wider text-amber-500">
-            BOŞ SAAT BELİRLEME (08:00 - 23:00) • 7 GÜNLÜK PLANLAMA
+            BOŞ SAAT SEÇİMİ
           </div>
           <div id="slots-selected-date-label" class="font-industrial text-2xl sm:text-3xl font-extrabold text-white mt-0.5">
             TARİH YÜKLENİYOR...
@@ -215,19 +192,16 @@
         </div>
 
         <!-- TAKVİM TETİKLEYİCİ BUTON -->
-        <div class="relative self-start sm:self-center">
+        <div class="relative self-start sm:self-center shrink-0">
           <button 
             type="button"
             onclick="toggleAdminCalendarPopover()"
-            class="bg-input hover:border-amber-500 text-white border-2 border-zinc-700 px-4 py-2.5 flex items-center gap-2.5 cursor-pointer"
+            class="bg-input hover:border-amber-500 border-2 border-zinc-700 px-3.5 py-2 flex items-center gap-2 cursor-pointer"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="square" stroke-linejoin="miter" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <div class="text-left">
-              <span class="block text-[10px] font-bold uppercase text-zinc-400 leading-none">TARİH DEĞİŞTİR</span>
-              <span id="calendar-btn-short-date" class="font-industrial text-base font-extrabold text-amber-400 tracking-wider">GÜN SEÇİN</span>
-            </div>
+            <span class="font-industrial text-base font-extrabold text-amber-400 tracking-wider uppercase whitespace-nowrap">TARİH SEÇ</span>
           </button>
 
           <!-- AÇILIR TAKVİM COMPONENT'İ (BUGÜN + 7 GÜN KISITLI) -->
@@ -317,7 +291,7 @@
       <div class="bg-panel border-2 border-zinc-800 p-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div class="text-xs font-bold uppercase tracking-wider text-amber-500">
-            GÜNLÜK DERS PROGRAMI TAKİBİ (TAMAMLANAN / TOPLAM)
+            DERS PROGRAMI
           </div>
           <div id="schedule-date-label" class="font-industrial text-2xl font-bold text-white mt-0.5">
             PROGRAM
@@ -530,33 +504,24 @@
     <main class="max-w-xl mx-auto px-4 pt-6">
       <div class="bg-panel border-2 border-zinc-800 p-6">
         
-        <div class="flex items-center justify-between border-b-2 border-zinc-800 pb-4 mb-6">
-          <div>
-            <span id="detail-mode-badge" class="text-[11px] font-bold uppercase tracking-widest text-amber-500">
-              ÜYE PROFİL DETAYI
-            </span>
-            <h2 id="detail-header-name" class="font-industrial text-3xl font-extrabold uppercase text-white mt-0.5">
-              ÜYE ADI
-            </h2>
-          </div>
+        <div class="mb-3">
           <button 
             type="button"
             id="detail-back-btn"
             onclick="handleDetailBack()" 
-            class="text-xs font-bold uppercase px-3 py-1.5 bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white cursor-pointer"
+            class="inline-flex items-center gap-1.5 text-xs font-bold uppercase px-3 py-1.5 bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 cursor-pointer"
           >
             ← Geri Dön
           </button>
         </div>
 
-        <div class="bg-input border-2 border-zinc-800 p-4 mb-6 flex items-center justify-between">
-          <div>
-            <span class="text-xs font-bold uppercase text-zinc-400 block">MEVCUT PAKET DURUMU (TAMAMLANAN / TOPLAM)</span>
-            <span class="text-[11px] text-zinc-500">Paketi dolan üyeler yeni paket tanımlanana kadar devam edebilir</span>
-          </div>
-          <div id="detail-lesson-ratio" class="font-industrial text-4xl font-extrabold text-amber-400 tracking-wider">
-            -/-
-          </div>
+        <div class="border-b-2 border-zinc-800 pb-4 mb-6">
+          <span id="detail-mode-badge" class="text-[11px] font-bold uppercase tracking-widest text-amber-500 block">
+            ÜYE PROFİL DETAYI
+          </span>
+          <h2 id="detail-header-name" class="font-industrial text-3xl font-extrabold uppercase text-white mt-0.5 leading-none">
+            ÜYE ADI
+          </h2>
         </div>
 
         <div class="space-y-4">
@@ -582,7 +547,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">TAMAMLANAN (0-99)</label>
               <input type="text" inputmode="numeric" id="det-completed" oninput="sanitizeTwoDigitNumber(this)" disabled class="w-full bg-input border-2 border-zinc-800 disabled:text-zinc-300 text-white px-3 py-2.5 text-sm font-mono outline-none" />
@@ -590,10 +555,6 @@
             <div>
               <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">TOPLAM DERS (0-99)</label>
               <input type="text" inputmode="numeric" id="det-total" oninput="sanitizeTwoDigitNumber(this)" disabled class="w-full bg-input border-2 border-zinc-800 disabled:text-zinc-300 text-white px-3 py-2.5 text-sm font-mono outline-none" />
-            </div>
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">KALAN DERS</label>
-              <input type="text" id="det-remaining" disabled class="w-full bg-zinc-900 border-2 border-zinc-800 text-amber-400 px-3 py-2.5 text-sm font-mono font-bold outline-none" />
             </div>
           </div>
 
@@ -618,7 +579,7 @@
                 type="button" 
                 id="det-btn-renew-pass"
                 onclick="openRenewPasswordModal()" 
-                class="bg-amber-500 hover:bg-amber-400 text-black border-2 border-amber-500 font-industrial font-extrabold text-base uppercase px-4 py-2 whitespace-nowrap cursor-pointer"
+                class="hidden bg-amber-500 hover:bg-amber-400 text-black border-2 border-amber-500 font-industrial font-extrabold text-base uppercase px-4 py-2 whitespace-nowrap cursor-pointer"
               >
                 YENİLE
               </button>
@@ -898,15 +859,9 @@
   </div>
 
 
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
   <script>
-    // =========================================================================
-    // 1. SUPABASE BAĞLANTI AYARLARI
-    // =========================================================================
-    const SUPABASE_URL = 'https://hiarwdthivcmgabhhjjh.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_a_eeLPiolEV3oLSiM4ylKw_2vtlmT7j';
-
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     // =========================================================================
     // 2. TÜRKİYE YEREL SAATİ (GMT+3) VE TARİH HESAPLAMA YARDIMCILARI
     // =========================================================================
@@ -944,8 +899,8 @@
       const d = parseISOToLocalDate(isoStr);
       return d.toLocaleDateString('tr-TR', {
         day: 'numeric',
-        month: 'short',
-        weekday: 'short'
+        month: 'long',
+        weekday: 'long'
       }).toLocaleUpperCase('tr-TR');
     }
 
@@ -999,179 +954,6 @@
     let adminTimeSlots = createEmptySlotsArray();
     // Üyelerin ertesi gün için gördüğü saatler
     let timeSlots = createEmptySlotsArray();
-
-    // =========================================================================
-    // 4. SUPABASE VERİ ÇEKME FONKSİYONLARI (GÜVENLİ & KİŞİYE ÖZEL)
-    // =========================================================================
-    async function loadAllDataFromSupabase() {
-      if (!currentRole) return; // Giriş yapılmadıysa veritabanına istek atma
-
-      updateTopLiveClock();
-      const badge = document.getElementById('db-status-badge');
-      try {
-        let query = supabaseClient
-          .from('members')
-          .select('id, first_name, last_name, phone, email, password, total_lessons, completed_lessons, remaining_lessons, role, status');
-
-        // Giriş yapan kişi "üye" ise SADECE KENDİ ID'sine ait veriyi çek (diğer üyelerin bilgileri ve şifreleri gelmez)
-        if (currentRole === 'member') {
-          query = query.eq('id', currentMemberId);
-        }
-
-        const { data: membersData, error: memErr } = await query.order('id', { ascending: true });
-
-        if (memErr) throw memErr;
-
-        members = (membersData || []).map(row => ({
-          id: row.id,
-          firstName: row.first_name,
-          lastName: row.last_name,
-          phone: row.phone || '',
-          email: row.email,
-          password: row.password || '',
-          totalLessons: row.total_lessons,
-          completedLessons: row.completed_lessons,
-          remainingLessons: row.remaining_lessons,
-          role: row.role,
-          status: row.status
-        }));
-
-        if (currentRole === 'admin') {
-          await loadAdminSlotsForDate(selectedAdminSlotDateISO);
-        }
-        await loadTomorrowSlotsFromSupabase();
-
-        if (badge) {
-          badge.textContent = 'SUPABASE DB: BAĞLI';
-          badge.className = 'bg-emerald-500 text-black font-extrabold px-2 py-0.5 uppercase';
-        }
-
-        if (currentRole === 'admin') {
-          renderGrid();
-          renderMembersList();
-        }
-      } catch (err) {
-        console.error('Supabase bağlantı hatası:', err);
-        if (badge) {
-          badge.textContent = 'DB BAĞLANTI HATASI';
-          badge.className = 'bg-red-600 text-white font-extrabold px-2 py-0.5 uppercase';
-        }
-      }
-    }
-
-    async function loadAdminSlotsForDate(targetDateISO) {
-      const { data: slotRows, error: slotErr } = await supabaseClient
-        .from('daily_slots')
-        .select('*, bookings(*)')
-        .eq('slot_date', targetDateISO);
-
-      if (slotErr) throw slotErr;
-
-      adminTimeSlots.forEach(s => {
-        const found = (slotRows || []).find(r => r.hour_index === s.id);
-        if (found) {
-          s.dbSlotId = found.id;
-          s.selected = true;
-          s.isShared = found.is_shared;
-          s.bookings = (found.bookings || []).map(b => ({
-            id: b.id,
-            memberId: b.member_id,
-            status: b.status,
-            lessonProgress: b.lesson_progress
-          }));
-        } else {
-          s.dbSlotId = null;
-          s.selected = false;
-          s.isShared = false;
-          s.bookings = [];
-        }
-      });
-    }
-
-    async function loadTomorrowSlotsFromSupabase() {
-      const tomorrowISO = getDateISO(1);
-
-      const { data: slotRows, error: slotErr } = await supabaseClient
-        .from('daily_slots')
-        .select('*, bookings(*)')
-        .eq('slot_date', tomorrowISO);
-
-      if (slotErr) throw slotErr;
-
-      timeSlots.forEach(s => {
-        const found = (slotRows || []).find(r => r.hour_index === s.id);
-        if (found) {
-          s.dbSlotId = found.id;
-          s.selected = true;
-          s.isShared = found.is_shared;
-          s.bookings = (found.bookings || []).map(b => ({
-            id: b.id,
-            memberId: b.member_id,
-            status: b.status,
-            lessonProgress: b.lesson_progress
-          }));
-        } else {
-          s.dbSlotId = null;
-          s.selected = false;
-          s.isShared = false;
-          s.bookings = [];
-        }
-      });
-    }
-
-    // =========================================================================
-    // 5. INPUT DOĞRULAMA (VALIDASYON) FONKSİYONLARI
-    // =========================================================================
-    function sanitizeTurkishLetters(inputEl) {
-      inputEl.value = inputEl.value.replace(/[^a-zA-ZçÇğĞıİöÖşŞüÜ\s]/g, '');
-    }
-
-    function sanitizeTwoDigitNumber(inputEl) {
-      let digits = inputEl.value.replace(/\D/g, '');
-      if (digits.length > 2) digits = digits.slice(0, 2);
-      inputEl.value = digits;
-    }
-
-    function formatPhoneDigits(digits) {
-      if (!digits) return '';
-      let p = digits.slice(0, 11);
-      if (p.length <= 4) return p;
-      if (p.length <= 7) return `${p.slice(0, 4)} ${p.slice(4)}`;
-      if (p.length <= 9) return `${p.slice(0, 4)} ${p.slice(4, 7)} ${p.slice(7)}`;
-      return `${p.slice(0, 4)} ${p.slice(4, 7)} ${p.slice(7, 9)} ${p.slice(9, 11)}`;
-    }
-
-    function handlePhoneInput(inputEl) {
-      let digits = inputEl.value.replace(/\D/g, '');
-      const maxLen = digits.startsWith('5') ? 10 : 11;
-      digits = digits.slice(0, maxLen);
-      inputEl.value = formatPhoneDigits(digits);
-      const errEl = document.getElementById('nm-phone-error');
-      if (errEl) errEl.classList.add('hidden');
-    }
-
-    function handlePhoneBlur(inputEl) {
-      let digits = inputEl.value.replace(/\D/g, '');
-      if (!digits) return;
-      if (digits.startsWith('5')) digits = '0' + digits;
-      digits = digits.slice(0, 11);
-      inputEl.value = formatPhoneDigits(digits);
-    }
-
-    function isValidTurkishMobile(phoneStr) {
-      const digits = phoneStr.replace(/\D/g, '');
-      if (digits.length === 0) return true;
-      return /^05\d{9}$/.test(digits);
-    }
-
-    function createRandom8CharPassword() {
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      let pass = '';
-      for (let i = 0; i < 8; i++) {
-        pass += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return pass;
-    }
 
     // =========================================================================
     // 6. TEK FORMLU GİRİŞ, ŞİFRE KAYDETME & OTURUM (LOCAL STORAGE) YÖNETİMİ
@@ -1234,25 +1016,21 @@
 
       const roleKey = userRow.role === 'Admin' ? 'admin' : 'member';
 
-      // "Şifreyi Kaydet" seçiliyse hem bilgileri hem aktif oturumu kaydet
+      // "Şifreyi Kaydet" seçiliyse giriş bilgilerini kutularda hazır gelmesi için kaydet
       if (rememberMe) {
         localStorage.setItem('yasinRezSavedCreds', JSON.stringify({
           email: emailVal,
           password: passVal
         }));
-        localStorage.setItem('yasinRezSession', JSON.stringify({
-          role: roleKey,
-          id: userRow.id
-        }));
       } else {
         localStorage.removeItem('yasinRezSavedCreds');
-        localStorage.removeItem('yasinRezSession');
       }
+      localStorage.removeItem('yasinRezSession');
 
+      currentMemberId = userRow.id;
       if (roleKey === 'admin') {
         await quickSwitchRole('admin');
       } else {
-        currentMemberId = userRow.id;
         await quickSwitchRole('member');
       }
     }
@@ -1271,10 +1049,19 @@
       await loadAllDataFromSupabase();
 
       if (role === 'admin') {
+        updateAdminHeaderInfo();
         switchScreen('slots');
       } else {
         updateMemberHeaderInfo();
         switchScreen('member-booking');
+      }
+    }
+
+    function updateAdminHeaderInfo() {
+      const adminUser = members.find(item => item.id === currentMemberId) || members.find(item => item.role === 'Admin');
+      const nameEl = document.getElementById('admin-header-name');
+      if (nameEl && adminUser) {
+        nameEl.textContent = `${adminUser.firstName} ${adminUser.lastName}`;
       }
     }
 
@@ -1287,70 +1074,6 @@
       ratioEl.className = m.completedLessons >= m.totalLessons
         ? 'bg-input border border-red-500 text-red-400 font-mono text-[11px] font-bold px-2 py-0.5'
         : 'bg-input border border-zinc-700 text-amber-400 font-mono text-[11px] font-bold px-2 py-0.5';
-    }
-
-    // =========================================================================
-    // 7. EKRAN GEÇİŞ YÖNETİMİ
-    // =========================================================================
-    function switchScreen(screenName) {
-      const screens = ['login', 'slots', 'schedule', 'members', 'new-member', 'member-detail', 'member-booking'];
-      screens.forEach(s => {
-        const el = document.getElementById(`screen-${s}`);
-        if (el) el.classList.add('hidden');
-      });
-
-      const adminHeader = document.getElementById('admin-header');
-      const memberHeader = document.getElementById('member-header');
-
-      if (screenName === 'login') {
-        adminHeader.classList.add('hidden');
-        memberHeader.classList.add('hidden');
-      } else if (currentRole === 'admin') {
-        adminHeader.classList.remove('hidden');
-        memberHeader.classList.add('hidden');
-      } else {
-        adminHeader.classList.add('hidden');
-        memberHeader.classList.remove('hidden');
-        updateMemberHeaderInfo();
-      }
-
-      const adminNavs = {
-        slots: document.getElementById('nav-slots'),
-        schedule: document.getElementById('nav-schedule'),
-        members: document.getElementById('nav-members')
-      };
-      Object.values(adminNavs).forEach(btn => {
-        if (btn) btn.className = 'bg-input text-zinc-300 hover:border-white font-bold text-xs uppercase px-3 py-2 border border-zinc-700 cursor-pointer';
-      });
-
-      if (screenName === 'slots') {
-        adminNavs.slots.className = 'bg-white text-black font-bold text-xs uppercase px-3 py-2 border border-white cursor-pointer';
-        renderGrid();
-      }
-      if (screenName === 'schedule') {
-        adminNavs.schedule.className = 'bg-white text-black font-bold text-xs uppercase px-3 py-2 border border-white cursor-pointer';
-        renderSchedule();
-      }
-      if (['members', 'new-member'].includes(screenName) || (screenName === 'member-detail' && currentRole === 'admin')) {
-        adminNavs.members.className = 'bg-white text-black font-bold text-xs uppercase px-3 py-2 border border-white cursor-pointer';
-        if (screenName === 'members') renderMembersList();
-      }
-
-      const memberNavBooking = document.getElementById('nav-member-booking');
-      const memberNavProfile = document.getElementById('nav-member-profile');
-      if (memberNavBooking) memberNavBooking.className = 'bg-input text-zinc-300 hover:border-white font-bold text-xs uppercase px-3 py-2 border border-zinc-700 cursor-pointer';
-      if (memberNavProfile) memberNavProfile.className = 'bg-input text-zinc-300 hover:border-white font-bold text-xs uppercase px-3 py-2 border border-zinc-700 cursor-pointer';
-
-      if (screenName === 'member-booking') {
-        if (memberNavBooking) memberNavBooking.className = 'bg-white text-black font-bold text-xs uppercase px-3 py-2 border border-white cursor-pointer';
-        renderMemberBookingScreen();
-      }
-      if (screenName === 'member-detail' && currentRole === 'member') {
-        if (memberNavProfile) memberNavProfile.className = 'bg-white text-black font-bold text-xs uppercase px-3 py-2 border border-white cursor-pointer';
-      }
-
-      document.getElementById(`screen-${screenName}`).classList.remove('hidden');
-      window.scrollTo(0, 0);
     }
 
     // =========================================================================
@@ -1440,7 +1163,6 @@
 
     function renderGrid() {
       document.getElementById('slots-selected-date-label').textContent = formatISOToTurkishLong(selectedAdminSlotDateISO);
-      document.getElementById('calendar-btn-short-date').textContent = formatISOToTurkishShort(selectedAdminSlotDateISO);
 
       const grid = document.getElementById('slots-grid');
       grid.innerHTML = '';
@@ -1828,16 +1550,12 @@
       populateMemberDetailFields(m);
       setMemberDetailEditState(false);
 
-      const renewPassBtn = document.getElementById('det-btn-renew-pass');
-
       if (currentRole === 'member') {
         document.getElementById('detail-view-actions').classList.add('hidden');
         document.getElementById('detail-back-btn').textContent = '← Ders Seçimine Dön';
-        if (renewPassBtn) renewPassBtn.classList.add('hidden');
       } else {
         document.getElementById('detail-view-actions').classList.remove('hidden');
         document.getElementById('detail-back-btn').textContent = '← Listeye Dön';
-        if (renewPassBtn) renewPassBtn.classList.remove('hidden');
       }
 
       switchScreen('member-detail');
@@ -1857,19 +1575,12 @@
 
     function populateMemberDetailFields(m) {
       document.getElementById('detail-header-name').textContent = `${m.firstName} ${m.lastName}`;
-      const ratioEl = document.getElementById('detail-lesson-ratio');
-      ratioEl.textContent = `${m.completedLessons}/${m.totalLessons}`;
-      ratioEl.className = m.completedLessons >= m.totalLessons
-        ? 'font-industrial text-4xl font-extrabold text-red-500 tracking-wider'
-        : 'font-industrial text-4xl font-extrabold text-amber-400 tracking-wider';
-
       document.getElementById('det-firstname').value = m.firstName;
       document.getElementById('det-lastname').value = m.lastName;
       document.getElementById('det-phone').value = m.phone;
       document.getElementById('det-email').value = m.email;
       document.getElementById('det-total').value = m.totalLessons;
       document.getElementById('det-completed').value = m.completedLessons;
-      document.getElementById('det-remaining').value = m.remainingLessons;
 
       const passInput = document.getElementById('det-password');
       const toggleBtn = document.getElementById('det-btn-toggle-pass');
@@ -1940,6 +1651,10 @@
       });
 
       document.getElementById('detail-mode-badge').textContent = isEditing ? 'ÜYE BİLGİLERİNİ GÜNCELLEME MODU' : 'ÜYE PROFİL DETAYI';
+      const renewPassBtn = document.getElementById('det-btn-renew-pass');
+      if (renewPassBtn) {
+        renewPassBtn.classList.toggle('hidden', !(currentRole === 'admin' && isEditing));
+      }
       if (currentRole === 'admin') {
         document.getElementById('detail-view-actions').classList.toggle('hidden', isEditing);
         document.getElementById('detail-edit-actions').classList.toggle('hidden', !isEditing);
@@ -2388,21 +2103,10 @@
       document.getElementById('toast-modal').classList.remove('hidden');
     }
 
-    // Sayfa Açıldığında Tarayıcı Hafızasını (Local Storage) Kontrol Et
-    async function initApp() {
+    // Sayfa Açıldığında Kayıtlı Giriş Bilgilerini Kutulara Doldur (Otomatik Giriş Yapma)
+    function initApp() {
       updateTopLiveClock();
-      const savedSession = localStorage.getItem('yasinRezSession');
-      if (savedSession) {
-        try {
-          const sessionData = JSON.parse(savedSession);
-          currentRole = sessionData.role;
-          currentMemberId = sessionData.id;
-          await quickSwitchRole(currentRole);
-          return;
-        } catch (e) {
-          localStorage.removeItem('yasinRezSession');
-        }
-      }
+      localStorage.removeItem('yasinRezSession');
       loadSavedLoginCredentials();
       switchScreen('login');
     }

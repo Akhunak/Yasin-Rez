@@ -1,0 +1,23 @@
+body {
+  background-color: #121215;
+  color: #f4f4f5;
+  font-family: 'Inter', sans-serif;
+}
+.bg-panel {
+  background-color: #1a1a1f;
+}
+.bg-input {
+  background-color: #101013;
+}
+.font-industrial {
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.04em;
+}
+* {
+  transition: none !important;
+  animation: none !important;
+}
+input[type="checkbox"] {
+  accent-color: #f59e0b;
+}
+
