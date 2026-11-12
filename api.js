@@ -19,7 +19,7 @@ async function loadAllDataFromSupabase() {
       .from('members')
       .select('id, first_name, last_name, phone, email, password, total_lessons, completed_lessons, remaining_lessons, role, status');
 
-    // Giriş yapan kişi "üye" ise SADECE KENDİ ID'sine ait veriyi çek (diğer üyelerin bilgileri ve şifreleri gelmez)
+    // Giriş yapan kişi "üye" ise SADECE KENDİ ID'sine ait veriyi çek (diğer üyelerin bilgileri gelmez)
     if (currentRole === 'member') {
       query = query.eq('id', currentMemberId);
     }
@@ -126,11 +126,19 @@ async function loadTomorrowSlotsFromSupabase() {
 }
 
 async function authenticateUserFromDb(emailVal, passVal) {
+  const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+    email: emailVal,
+    password: passVal
+  });
+
+  if (authError || !authData?.user) {
+    return { data: null, error: authError || new Error('Kimlik doğrulama başarısız.') };
+  }
+
   return await supabaseClient
     .from('members')
     .select('id, role, status, email')
-    .ilike('email', emailVal)
-    .eq('password', passVal)
+    .ilike('email', authData.user.email || emailVal)
     .maybeSingle();
 }
 
@@ -192,6 +200,21 @@ async function confirmCreateMember() {
   const remaining = total - completed;
   const password = document.getElementById('nm-password').value;
 
+  // Admin oturumunu bozmadan yeni üyeyi Supabase Auth üzerinde oluştur
+  const tempAuthClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  });
+
+  const { error: authError } = await tempAuthClient.auth.signUp({
+    email,
+    password
+  });
+
+  if (authError) {
+    alert('Supabase Auth kullanıcı kaydı sırasında hata oluştu: ' + authError.message);
+    return;
+  }
+
   const { error } = await supabaseClient
     .from('members')
     .insert([{
@@ -225,10 +248,10 @@ async function confirmRenewMemberPassword() {
 
   const newPassword = createRandom8CharPassword();
 
-  const { error } = await supabaseClient
-    .from('members')
-    .update({ password: newPassword })
-    .eq('id', selectedMemberId);
+  const { error } = await supabaseClient.rpc('admin_renew_member_password', {
+    p_member_id: selectedMemberId,
+    p_new_password: newPassword
+  });
 
   if (error) {
     alert('Şifre yenilenirken hata oluştu: ' + error.message);
@@ -346,53 +369,23 @@ async function confirmMemberBooking() {
   const currentSlot = getMemberCurrentBookingSlot(currentMemberId);
   if (!m || !targetSlot || !targetSlot.dbSlotId) return;
 
-  const tomorrowISO = getDateISO(1);
-
   try {
-    if (currentSlot) {
-      const existingBooking = currentSlot.bookings.find(b => b.memberId === currentMemberId && b.status === 'booked');
-      const { error } = await supabaseClient
-        .from('bookings')
-        .update({ slot_id: targetSlot.dbSlotId })
-        .eq('id', existingBooking.id);
+    const { data: result, error } = await supabaseClient.rpc('member_book_slot', {
+      p_target_slot_id: targetSlot.dbSlotId
+    });
 
-      if (error) throw error;
+    if (error) throw error;
 
-      closeModal('member-book-confirm-modal');
-      await loadAllDataFromSupabase();
-      renderMemberBookingScreen();
+    closeModal('member-book-confirm-modal');
+    await loadAllDataFromSupabase();
+    renderMemberBookingScreen();
+
+    if (result && result.action === 'changed' && currentSlot) {
       showToast('DERS SAATİ DEĞİŞTİRİLDİ', `Eski saatiniz (${currentSlot.label}) boşa çıkarıldı ve yeni ders saatiniz ${targetSlot.label} olarak güncellendi.`);
     } else {
-      const newCompleted = m.completedLessons + 1;
-      const newRemaining = m.remainingLessons - 1;
-      const progressText = `${newCompleted}/${m.totalLessons}`;
-
-      const { error: bookErr } = await supabaseClient
-        .from('bookings')
-        .insert([{
-          slot_id: targetSlot.dbSlotId,
-          slot_date: tomorrowISO,
-          member_id: currentMemberId,
-          status: 'booked',
-          lesson_progress: progressText
-        }]);
-
-      if (bookErr) throw bookErr;
-
-      const { error: memErr } = await supabaseClient
-        .from('members')
-        .update({
-          completed_lessons: newCompleted,
-          remaining_lessons: newRemaining
-        })
-        .eq('id', currentMemberId);
-
-      if (memErr) throw memErr;
-
-      closeModal('member-book-confirm-modal');
-      await loadAllDataFromSupabase();
-      renderMemberBookingScreen();
-      showToast('DERS SAATİ ATANDI', `${targetSlot.label} ders saati adınıza kaydedildi. Güncel ders durumunuz (Tamamlanan/Toplam): ${newCompleted}/${m.totalLessons}`);
+      const updatedCompleted = result?.completed_lessons ?? (m.completedLessons + 1);
+      const updatedTotal = result?.total_lessons ?? m.totalLessons;
+      showToast('DERS SAATİ ATANDI', `${targetSlot.label} ders saati adınıza kaydedildi. Güncel ders durumunuz (Tamamlanan/Toplam): ${updatedCompleted}/${updatedTotal}`);
     }
   } catch (err) {
     alert('Rezervasyon işlemi sırasında hata: ' + err.message);
@@ -408,43 +401,22 @@ async function confirmMemberCancelBooking() {
   if (!bookingObj) return;
 
   try {
-    if (memberSimMode === 'AFTER_MIDNIGHT') {
-      const { error } = await supabaseClient
-        .from('bookings')
-        .update({ status: 'late_cancelled' })
-        .eq('id', bookingObj.id);
+    const { data: result, error } = await supabaseClient.rpc('member_cancel_booking', {
+      p_booking_id: bookingObj.id
+    });
 
-      if (error) throw error;
+    if (error) throw error;
 
-      closeModal('member-cancel-confirm-modal');
-      await loadAllDataFromSupabase();
-      renderMemberBookingScreen();
-      showToast('DERS İPTAL EDİLDİ (23:59 SONRASI)', `Dersiniz iptal edildi. 23:59 sonrası olduğu için ders yapılmış sayıldı (${m.completedLessons}/${m.totalLessons}).`);
+    closeModal('member-cancel-confirm-modal');
+    await loadAllDataFromSupabase();
+    renderMemberBookingScreen();
+
+    if (result && result.action === 'late_cancelled') {
+      showToast('DERS İPTAL EDİLDİ (23:59 SONRASI)', `Dersiniz iptal edildi. 23:59 sonrası olduğu için ders yapılmış sayıldı (${result.completed_lessons}/${result.total_lessons}).`);
     } else {
-      const { error: delErr } = await supabaseClient
-        .from('bookings')
-        .delete()
-        .eq('id', bookingObj.id);
-
-      if (delErr) throw delErr;
-
-      const restoredRemaining = m.remainingLessons + 1;
-      const restoredCompleted = Math.max(0, m.completedLessons - 1);
-
-      const { error: memErr } = await supabaseClient
-        .from('members')
-        .update({
-          remaining_lessons: restoredRemaining,
-          completed_lessons: restoredCompleted
-        })
-        .eq('id', currentMemberId);
-
-      if (memErr) throw memErr;
-
-      closeModal('member-cancel-confirm-modal');
-      await loadAllDataFromSupabase();
-      renderMemberBookingScreen();
-      showToast('DERS SEÇİMİNDEN VAZGEÇİLDİ', `${currentSlot.label} saati tekrar boşa çıkarıldı. Güncel ders durumunuz (Tamamlanan/Toplam): ${restoredCompleted}/${m.totalLessons}`);
+      const restoredCompleted = result?.completed_lessons ?? Math.max(0, m.completedLessons - 1);
+      const totalLessons = result?.total_lessons ?? m.totalLessons;
+      showToast('DERS SEÇİMİNDEN VAZGEÇİLDİ', `${currentSlot.label} saati tekrar boşa çıkarıldı. Güncel ders durumunuz (Tamamlanan/Toplam): ${restoredCompleted}/${totalLessons}`);
     }
   } catch (err) {
     alert('İptal işlemi sırasında hata: ' + err.message);

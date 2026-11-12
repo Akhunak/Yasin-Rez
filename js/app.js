@@ -1,6 +1,16 @@
 // =========================================================================
-// 5. INPUT DOĞRULAMA (VALIDASYON) FONKSİYONLARI
+// 5. INPUT DOĞRULAMA (VALIDASYON) VE XSS KORUMA FONKSİYONLARI
 // =========================================================================
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function sanitizeTurkishLetters(inputEl) {
   inputEl.value = inputEl.value.replace(/[^a-zA-ZçÇğĞıİöÖşŞüÜ\s]/g, '');
 }

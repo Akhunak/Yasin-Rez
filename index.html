@@ -68,22 +68,17 @@
   <header id="member-header" class="hidden bg-panel border-b-2 border-zinc-800 px-4 py-4">
     <div class="max-w-3xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <div class="flex items-center gap-2">
-          <span id="member-header-name" class="text-[11px] font-bold uppercase tracking-widest text-emerald-400">
-            ÜYE PANELİ
-          </span>
-          <span id="member-header-ratio" class="bg-input border border-zinc-700 text-amber-400 font-mono text-[11px] font-bold px-2 py-0.5">
-            Tamamlanan: -/-
-          </span>
-        </div>
+        <span id="member-header-name" class="text-[11px] font-bold uppercase tracking-widest text-emerald-400 block">
+          ÜYE ADI SOYADI
+        </span>
         <h1 class="font-industrial text-2xl sm:text-3xl font-extrabold uppercase text-white mt-0.5">
-          DERS REZERVASYON SİSTEMİ
+          REZERVASYON YÖNETİMİ
         </h1>
       </div>
       
       <div class="flex flex-wrap gap-2">
         <button type="button" id="nav-member-booking" onclick="switchScreen('member-booking')" class="font-bold text-xs uppercase px-3 py-2 border cursor-pointer">
-          Ders Saati Seçimi
+          Saat Seçim
         </button>
         <button type="button" id="nav-member-profile" onclick="openCurrentMemberProfile()" class="font-bold text-xs uppercase px-3 py-2 border cursor-pointer">
           Profilim
@@ -637,7 +632,7 @@
       <div class="bg-panel border-2 border-zinc-800 p-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div class="text-xs font-bold uppercase tracking-wider text-zinc-400">
-            ERTESİ GÜN İÇİN DERS SAATİ SEÇİMİ (GÜNDE MAKS. 1 DERS)
+            ERTESİ GÜN İÇİN DERS SAATİ SEÇİMİ
           </div>
           <div id="member-tomorrow-date-label" class="font-industrial text-2xl font-bold text-white mt-0.5">
             YARININ TARİHİ
@@ -858,6 +853,14 @@
     </div>
   </div>
 
+  <!-- 9. TAM EKRAN YÜKLENİYOR (LOADING) OVERLAY -->
+  <div id="login-loading-overlay" class="hidden fixed inset-0 bg-zinc-900/75 backdrop-blur-[1px] flex flex-col items-center justify-center z-[100] select-none cursor-wait">
+    <div class="w-12 h-12 border-4 border-zinc-600 border-t-amber-400 rounded-full loading-spinner mb-3"></div>
+    <span class="font-industrial text-lg font-extrabold uppercase tracking-widest text-white">
+      YÜKLENİYOR...
+    </span>
+  </div>
+
 
   <script src="js/api.js"></script>
   <script src="js/app.js"></script>
@@ -922,6 +925,7 @@
     // =========================================================================
     let currentRole = null;
     let currentMemberId = null;
+    let currentSessionPassword = '';
     let memberSimMode = 'OPEN_WINDOW';
     let pendingBookingSlotId = null;
     let scheduleDayOffset = 0; // 0 = Bugün, 1 = Yarın
@@ -982,9 +986,24 @@
       }
     }
 
+    let isLoginInProgress = false;
+
+    function setLoginLoadingState(isLoading) {
+      isLoginInProgress = isLoading;
+      const overlay = document.getElementById('login-loading-overlay');
+      if (overlay) {
+        overlay.classList.toggle('hidden', !isLoading);
+      }
+      if (isLoading && document.activeElement) {
+        document.activeElement.blur();
+      }
+    }
+
     async function handleLogin() {
+      if (isLoginInProgress) return;
+
       const emailVal = document.getElementById('login-email').value.trim().toLowerCase();
-      const passVal = document.getElementById('login-password').value.trim().toUpperCase();
+      const passVal = document.getElementById('login-password').value.trim();
       const rememberMe = document.getElementById('login-remember-me').checked;
       const errEl = document.getElementById('login-error-msg');
       errEl.classList.add('hidden');
@@ -995,51 +1014,73 @@
         return;
       }
 
-      const { data: userRow, error } = await supabaseClient
-        .from('members')
-        .select('id, role, status, email')
-        .ilike('email', emailVal)
-        .eq('password', passVal)
-        .maybeSingle();
+      setLoginLoadingState(true);
 
-      if (error || !userRow) {
-        errEl.textContent = 'E-posta adresi veya şifre hatalı!';
-        errEl.classList.remove('hidden');
-        return;
-      }
-
-      if (userRow.status !== 'Active') {
-        errEl.textContent = 'Üyeliğiniz pasif durumdadır. Lütfen antrenörünüzle iletişime geçin.';
-        errEl.classList.remove('hidden');
-        return;
-      }
-
-      const roleKey = userRow.role === 'Admin' ? 'admin' : 'member';
-
-      // "Şifreyi Kaydet" seçiliyse giriş bilgilerini kutularda hazır gelmesi için kaydet
-      if (rememberMe) {
-        localStorage.setItem('yasinRezSavedCreds', JSON.stringify({
+      try {
+        const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
           email: emailVal,
           password: passVal
-        }));
-      } else {
-        localStorage.removeItem('yasinRezSavedCreds');
-      }
-      localStorage.removeItem('yasinRezSession');
+        });
 
-      currentMemberId = userRow.id;
-      if (roleKey === 'admin') {
-        await quickSwitchRole('admin');
-      } else {
-        await quickSwitchRole('member');
+        if (authError || !authData?.user) {
+          errEl.textContent = 'E-posta adresi veya şifre hatalı!';
+          errEl.classList.remove('hidden');
+          return;
+        }
+
+        const { data: userRow, error } = await supabaseClient
+          .from('members')
+          .select('id, role, status, email, password')
+          .ilike('email', authData.user.email || emailVal)
+          .maybeSingle();
+
+        if (error || !userRow) {
+          errEl.textContent = 'Üye kaydı bulunamadı!';
+          errEl.classList.remove('hidden');
+          return;
+        }
+
+        if (userRow.status !== 'Active') {
+          await supabaseClient.auth.signOut();
+          errEl.textContent = 'Üyeliğiniz pasif durumdadır. Lütfen antrenörünüzle iletişime geçin.';
+          errEl.classList.remove('hidden');
+          return;
+        }
+
+        if (!userRow.password) {
+          await supabaseClient.rpc('sync_own_password_display', { p_password: passVal });
+        }
+
+        const roleKey = userRow.role === 'Admin' ? 'admin' : 'member';
+
+        // "Şifreyi Kaydet" seçiliyse sadece e-posta bilgisini kutuda hazır gelmesi için kaydet (şifre düz metin saklanmaz)
+        if (rememberMe) {
+          localStorage.setItem('yasinRezSavedCreds', JSON.stringify({
+            email: emailVal
+          }));
+        } else {
+          localStorage.removeItem('yasinRezSavedCreds');
+        }
+        localStorage.removeItem('yasinRezSession');
+
+        currentMemberId = userRow.id;
+        currentSessionPassword = passVal;
+        if (roleKey === 'admin') {
+          await quickSwitchRole('admin');
+        } else {
+          await quickSwitchRole('member');
+        }
+      } finally {
+        setLoginLoadingState(false);
       }
     }
 
-    function logoutUser() {
-      // Aktif oturumu kapat ama kullanıcı "Şifreyi Kaydet" dediyse giriş kutularında hazır beklet
+    async function logoutUser() {
+      await supabaseClient.auth.signOut();
       localStorage.removeItem('yasinRezSession');
       currentRole = null;
       currentMemberId = null;
+      currentSessionPassword = '';
       switchScreen('login');
       loadSavedLoginCredentials();
     }
@@ -1068,12 +1109,7 @@
     function updateMemberHeaderInfo() {
       const m = members.find(item => item.id === currentMemberId);
       if (!m) return;
-      document.getElementById('member-header-name').textContent = `ÜYE PANELİ • ${m.firstName} ${m.lastName}`;
-      const ratioEl = document.getElementById('member-header-ratio');
-      ratioEl.textContent = `Tamamlanan: ${m.completedLessons}/${m.totalLessons}`;
-      ratioEl.className = m.completedLessons >= m.totalLessons
-        ? 'bg-input border border-red-500 text-red-400 font-mono text-[11px] font-bold px-2 py-0.5'
-        : 'bg-input border border-zinc-700 text-amber-400 font-mono text-[11px] font-bold px-2 py-0.5';
+      document.getElementById('member-header-name').textContent = `${m.firstName} ${m.lastName}`;
     }
 
     // =========================================================================
@@ -1321,7 +1357,7 @@
         .order('hour_index', { ascending: true });
 
       if (error) {
-        container.innerHTML = `<div class="p-6 text-center text-red-400 text-xs">Hata: ${error.message}</div>`;
+        container.innerHTML = `<div class="p-6 text-center text-red-400 text-xs">Hata: ${escapeHtml(error.message)}</div>`;
         return;
       }
 
@@ -1345,23 +1381,25 @@
 
         if (!slot.is_shared) {
           const b = slot.bookings[0];
-          const fullName = b.members ? `${b.members.first_name} ${b.members.last_name}` : 'Üye';
+          const fullName = escapeHtml(b.members ? `${b.members.first_name} ${b.members.last_name}` : 'Üye');
+          const safeProgress = escapeHtml(b.lesson_progress);
           if (b.status === 'late_cancelled') {
-            displayHtml = `<span class="text-zinc-200 font-bold">${fullName}</span> <span class="text-red-400 font-mono font-semibold">- ${b.lesson_progress}</span>`;
+            displayHtml = `<span class="text-zinc-200 font-bold">${fullName}</span> <span class="text-red-400 font-mono font-semibold">- ${safeProgress}</span>`;
             borderClass = 'border-red-600/80';
             badgeHtml = `<span class="bg-red-600 text-white font-industrial text-base sm:text-lg font-extrabold px-3.5 py-1 uppercase tracking-wider inline-block">İPTAL</span>`;
           } else {
-            displayHtml = `<span class="text-white font-bold">${fullName}</span> <span class="text-zinc-400 font-mono font-semibold">- ${b.lesson_progress}</span>`;
+            displayHtml = `<span class="text-white font-bold">${fullName}</span> <span class="text-zinc-400 font-mono font-semibold">- ${safeProgress}</span>`;
             borderClass = 'border-zinc-800';
             badgeHtml = `<span class="bg-white text-black font-industrial text-base sm:text-lg font-extrabold px-3.5 py-1 uppercase tracking-wider inline-block">ÖZEL DERS</span>`;
           }
         } else {
           const parts = slot.bookings.map(b => {
-            const fullName = b.members ? `${b.members.first_name} ${b.members.last_name}` : 'Üye';
+            const fullName = escapeHtml(b.members ? `${b.members.first_name} ${b.members.last_name}` : 'Üye');
+            const safeProgress = escapeHtml(b.lesson_progress);
             if (b.status === 'late_cancelled') {
-              return `<span class="line-through text-red-400/80 decoration-2">${fullName} - ${b.lesson_progress}</span>`;
+              return `<span class="line-through text-red-400/80 decoration-2">${fullName} - ${safeProgress}</span>`;
             }
-            return `<span class="text-white font-bold">${fullName}</span> <span class="text-zinc-400 font-mono font-semibold">- ${b.lesson_progress}</span>`;
+            return `<span class="text-white font-bold">${fullName}</span> <span class="text-zinc-400 font-mono font-semibold">- ${safeProgress}</span>`;
           });
 
           displayHtml = parts.join(' <span class="text-zinc-500 font-bold mx-1">&amp;</span> ');
@@ -1374,7 +1412,7 @@
         row.innerHTML = `
           <div class="flex items-center gap-4">
             <div class="bg-input border border-zinc-800 px-3 py-2 font-industrial text-xl font-extrabold text-white tracking-wider min-w-[125px] text-center">
-              ${slot.hour_label}
+              ${escapeHtml(slot.hour_label)}
             </div>
             <div class="text-sm sm:text-base">
               ${displayHtml}
@@ -1405,25 +1443,28 @@
 
       activeMembers.forEach(member => {
         const ratioClass = member.completedLessons >= member.totalLessons ? 'text-red-500' : 'text-amber-400';
+        const safeFullName = escapeHtml(`${member.firstName} ${member.lastName}`);
+        const safePhone = escapeHtml(member.phone || 'Telefon Yok');
+        const safeId = Number(member.id);
 
         const row = document.createElement('div');
         row.className = 'grid grid-cols-12 items-center px-4 py-3.5 hover:bg-zinc-800/40';
         row.innerHTML = `
           <div class="col-span-5 sm:col-span-5">
-            <div class="font-bold text-white text-sm sm:text-base">${member.firstName} ${member.lastName}</div>
-            <div class="text-[11px] text-zinc-400 font-mono">${member.phone || 'Telefon Yok'}</div>
+            <div class="font-bold text-white text-sm sm:text-base">${safeFullName}</div>
+            <div class="text-[11px] text-zinc-400 font-mono">${safePhone}</div>
           </div>
 
           <div class="col-span-3 sm:col-span-3 text-center">
             <span class="font-industrial text-2xl font-extrabold ${ratioClass} tracking-wider">
-              ${member.completedLessons}/${member.totalLessons}
+              ${Number(member.completedLessons)}/${Number(member.totalLessons)}
             </span>
           </div>
 
           <div class="col-span-4 sm:col-span-4 flex items-center justify-end gap-1.5 sm:gap-2">
             <button 
               type="button"
-              onclick="openRenewModal(${member.id})" 
+              onclick="openRenewModal(${safeId})" 
               title="Paketi Yenile"
               class="bg-input hover:bg-amber-500 hover:text-black text-amber-400 border border-zinc-700 p-2 cursor-pointer flex items-center gap-1 text-xs font-bold uppercase"
             >
@@ -1435,7 +1476,7 @@
 
             <button 
               type="button"
-              onclick="openMemberDetail(${member.id})" 
+              onclick="openMemberDetail(${safeId})" 
               title="Üye Detay"
               class="bg-input hover:bg-white hover:text-black text-white border border-zinc-700 p-2 cursor-pointer flex items-center gap-1 text-xs font-bold uppercase"
             >
@@ -1448,7 +1489,7 @@
 
             <button 
               type="button"
-              onclick="openDeleteMemberModal(${member.id})" 
+              onclick="openDeleteMemberModal(${safeId})" 
               title="Üyeyi Sil (Pasife Al)"
               class="bg-input hover:bg-red-600 hover:text-white text-red-500 border border-zinc-700 p-2 cursor-pointer flex items-center gap-1 text-xs font-bold uppercase"
             >
@@ -1515,6 +1556,21 @@
       const completed = Math.min(99, Math.max(0, parseInt(document.getElementById('nm-completed').value, 10) || 0));
       const remaining = total - completed;
       const password = document.getElementById('nm-password').value;
+
+      // Admin oturumunu bozmadan yeni üyeyi Supabase Auth üzerinde oluştur
+      const tempAuthClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+      });
+
+      const { error: authError } = await tempAuthClient.auth.signUp({
+        email,
+        password
+      });
+
+      if (authError) {
+        alert('Supabase Auth kullanıcı kaydı sırasında hata oluştu: ' + authError.message);
+        return;
+      }
 
       const { error } = await supabaseClient
         .from('members')
@@ -1584,9 +1640,24 @@
 
       const passInput = document.getElementById('det-password');
       const toggleBtn = document.getElementById('det-btn-toggle-pass');
-      passInput.type = 'password';
-      passInput.value = m.password || '';
-      if (toggleBtn) toggleBtn.textContent = 'GÖSTER';
+      if (passInput) {
+        const displayPass = m.password || (m.id === currentMemberId ? currentSessionPassword : '');
+        passInput.value = displayPass;
+        passInput.placeholder = displayPass ? '' : 'Şifre belirlemek için Güncelle > Yenile tıklayın';
+        if (currentRole === 'member') {
+          passInput.type = 'text';
+          if (toggleBtn) {
+            toggleBtn.classList.remove('hidden');
+            toggleBtn.textContent = 'GİZLE';
+          }
+        } else {
+          passInput.type = 'password';
+          if (toggleBtn) {
+            toggleBtn.classList.remove('hidden');
+            toggleBtn.textContent = 'GÖSTER';
+          }
+        }
+      }
     }
 
     function toggleDetailPasswordVisibility() {
@@ -1615,10 +1686,10 @@
 
       const newPassword = createRandom8CharPassword();
 
-      const { error } = await supabaseClient
-        .from('members')
-        .update({ password: newPassword })
-        .eq('id', selectedMemberId);
+      const { error } = await supabaseClient.rpc('admin_renew_member_password', {
+        p_member_id: selectedMemberId,
+        p_new_password: newPassword
+      });
 
       if (error) {
         alert('Şifre yenilenirken hata oluştu: ' + error.message);
@@ -1970,53 +2041,23 @@
       const currentSlot = getMemberCurrentBookingSlot(currentMemberId);
       if (!m || !targetSlot || !targetSlot.dbSlotId) return;
 
-      const tomorrowISO = getDateISO(1);
-
       try {
-        if (currentSlot) {
-          const existingBooking = currentSlot.bookings.find(b => b.memberId === currentMemberId && b.status === 'booked');
-          const { error } = await supabaseClient
-            .from('bookings')
-            .update({ slot_id: targetSlot.dbSlotId })
-            .eq('id', existingBooking.id);
+        const { data: result, error } = await supabaseClient.rpc('member_book_slot', {
+          p_target_slot_id: targetSlot.dbSlotId
+        });
 
-          if (error) throw error;
+        if (error) throw error;
 
-          closeModal('member-book-confirm-modal');
-          await loadAllDataFromSupabase();
-          renderMemberBookingScreen();
+        closeModal('member-book-confirm-modal');
+        await loadAllDataFromSupabase();
+        renderMemberBookingScreen();
+
+        if (result && result.action === 'changed' && currentSlot) {
           showToast('DERS SAATİ DEĞİŞTİRİLDİ', `Eski saatiniz (${currentSlot.label}) boşa çıkarıldı ve yeni ders saatiniz ${targetSlot.label} olarak güncellendi.`);
         } else {
-          const newCompleted = m.completedLessons + 1;
-          const newRemaining = m.remainingLessons - 1;
-          const progressText = `${newCompleted}/${m.totalLessons}`;
-
-          const { error: bookErr } = await supabaseClient
-            .from('bookings')
-            .insert([{
-              slot_id: targetSlot.dbSlotId,
-              slot_date: tomorrowISO,
-              member_id: currentMemberId,
-              status: 'booked',
-              lesson_progress: progressText
-            }]);
-
-          if (bookErr) throw bookErr;
-
-          const { error: memErr } = await supabaseClient
-            .from('members')
-            .update({
-              completed_lessons: newCompleted,
-              remaining_lessons: newRemaining
-            })
-            .eq('id', currentMemberId);
-
-          if (memErr) throw memErr;
-
-          closeModal('member-book-confirm-modal');
-          await loadAllDataFromSupabase();
-          renderMemberBookingScreen();
-          showToast('DERS SAATİ ATANDI', `${targetSlot.label} ders saati adınıza kaydedildi. Güncel ders durumunuz (Tamamlanan/Toplam): ${newCompleted}/${m.totalLessons}`);
+          const updatedCompleted = result?.completed_lessons ?? (m.completedLessons + 1);
+          const updatedTotal = result?.total_lessons ?? m.totalLessons;
+          showToast('DERS SAATİ ATANDI', `${targetSlot.label} ders saati adınıza kaydedildi. Güncel ders durumunuz (Tamamlanan/Toplam): ${updatedCompleted}/${updatedTotal}`);
         }
       } catch (err) {
         alert('Rezervasyon işlemi sırasında hata: ' + err.message);
@@ -2047,43 +2088,22 @@
       if (!bookingObj) return;
 
       try {
-        if (memberSimMode === 'AFTER_MIDNIGHT') {
-          const { error } = await supabaseClient
-            .from('bookings')
-            .update({ status: 'late_cancelled' })
-            .eq('id', bookingObj.id);
+        const { data: result, error } = await supabaseClient.rpc('member_cancel_booking', {
+          p_booking_id: bookingObj.id
+        });
 
-          if (error) throw error;
+        if (error) throw error;
 
-          closeModal('member-cancel-confirm-modal');
-          await loadAllDataFromSupabase();
-          renderMemberBookingScreen();
-          showToast('DERS İPTAL EDİLDİ (23:59 SONRASI)', `Dersiniz iptal edildi. 23:59 sonrası olduğu için ders yapılmış sayıldı (${m.completedLessons}/${m.totalLessons}).`);
+        closeModal('member-cancel-confirm-modal');
+        await loadAllDataFromSupabase();
+        renderMemberBookingScreen();
+
+        if (result && result.action === 'late_cancelled') {
+          showToast('DERS İPTAL EDİLDİ (23:59 SONRASI)', `Dersiniz iptal edildi. 23:59 sonrası olduğu için ders yapılmış sayıldı (${result.completed_lessons}/${result.total_lessons}).`);
         } else {
-          const { error: delErr } = await supabaseClient
-            .from('bookings')
-            .delete()
-            .eq('id', bookingObj.id);
-
-          if (delErr) throw delErr;
-
-          const restoredRemaining = m.remainingLessons + 1;
-          const restoredCompleted = Math.max(0, m.completedLessons - 1);
-
-          const { error: memErr } = await supabaseClient
-            .from('members')
-            .update({
-              remaining_lessons: restoredRemaining,
-              completed_lessons: restoredCompleted
-            })
-            .eq('id', currentMemberId);
-
-          if (memErr) throw memErr;
-
-          closeModal('member-cancel-confirm-modal');
-          await loadAllDataFromSupabase();
-          renderMemberBookingScreen();
-          showToast('DERS SEÇİMİNDEN VAZGEÇİLDİ', `${currentSlot.label} saati tekrar boşa çıkarıldı. Güncel ders durumunuz (Tamamlanan/Toplam): ${restoredCompleted}/${m.totalLessons}`);
+          const restoredCompleted = result?.completed_lessons ?? Math.max(0, m.completedLessons - 1);
+          const totalLessons = result?.total_lessons ?? m.totalLessons;
+          showToast('DERS SEÇİMİNDEN VAZGEÇİLDİ', `${currentSlot.label} saati tekrar boşa çıkarıldı. Güncel ders durumunuz (Tamamlanan/Toplam): ${restoredCompleted}/${totalLessons}`);
         }
       } catch (err) {
         alert('İptal işlemi sırasında hata: ' + err.message);

@@ -19,7 +19,7 @@ async function loadAllDataFromSupabase() {
       .from('members')
       .select('id, first_name, last_name, phone, email, password, total_lessons, completed_lessons, remaining_lessons, role, status');
 
-    // Giriş yapan kişi "üye" ise SADECE KENDİ ID'sine ait veriyi çek (diğer üyelerin bilgileri ve şifreleri gelmez)
+    // Giriş yapan kişi "üye" ise SADECE KENDİ ID'sine ait veriyi çek (diğer üyelerin bilgileri gelmez)
     if (currentRole === 'member') {
       query = query.eq('id', currentMemberId);
     }
