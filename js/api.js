@@ -17,7 +17,7 @@ async function loadAllDataFromSupabase() {
   try {
     let query = supabaseClient
       .from('members')
-      .select('id, first_name, last_name, phone, email, password, total_lessons, completed_lessons, remaining_lessons, role, status');
+      .select('*');
 
     // Giriş yapan kişi "üye" ise SADECE KENDİ ID'sine ait veriyi çek (diğer üyelerin bilgileri gelmez)
     if (currentRole === 'member') {
@@ -97,10 +97,19 @@ async function loadAdminSlotsForDate(targetDateISO) {
 async function loadTomorrowSlotsFromSupabase() {
   const tomorrowISO = getDateISO(1);
 
-  const { data: slotRows, error: slotErr } = await supabaseClient
-    .from('daily_slots')
-    .select('*, bookings(*)')
-    .eq('slot_date', tomorrowISO);
+  let { data: slotRows, error: slotErr } = await supabaseClient.rpc('get_slots_for_member', {
+    p_slot_date: tomorrowISO
+  });
+
+  // Eğer veritabanında get_slots_for_member RPC fonksiyonu henüz oluşturulmamışsa doğrudan daily_slots sorgusuna geri dön
+  if (slotErr) {
+    const fallbackRes = await supabaseClient
+      .from('daily_slots')
+      .select('*, bookings(*)')
+      .eq('slot_date', tomorrowISO);
+    slotRows = fallbackRes.data;
+    slotErr = fallbackRes.error;
+  }
 
   if (slotErr) throw slotErr;
 
@@ -114,7 +123,8 @@ async function loadTomorrowSlotsFromSupabase() {
         id: b.id,
         memberId: b.member_id,
         status: b.status,
-        lessonProgress: b.lesson_progress
+        lessonProgress: b.lesson_progress || null,
+        partnerName: b.partner_name || null
       }));
     } else {
       s.dbSlotId = null;

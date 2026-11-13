@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://hiarwdthivcmgabhhjjh.supabase.co wss://hiarwdthivcmgabhhjjh.supabase.co; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self';">
   <title>Ders Rezervasyon Sistemi</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase JavaScript SDK CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Supabase JavaScript SDK CDN (Sabit Sürüm & SRI Korumalı) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.js" integrity="sha384-tuevtT+97g9yLeuT/m52ejUJbc0hzsN6MPLiQEccySreiGjrcgk2tMBJR7/l6HGM" crossorigin="anonymous"></script>
   <!-- CrossFit / Endüstriyel Tema İçin Google Fonts (Barlow Condensed & Inter) -->
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" crossorigin="anonymous">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="min-h-screen selection:bg-white selection:text-black">
@@ -234,7 +233,7 @@
       </div>
 
       <div class="mb-4 text-xs text-zinc-400">
-        * Açmak istediğiniz saat kutularına tıklayın. 2 kişilik dersler için <strong>"Ortak Ders"</strong> kutucuğunu işaretleyin.
+        * Açmak istediğiniz saat kutularına tıklayın. 5 kişilik dersler için <strong>"Ortak Ders"</strong> kutucuğunu işaretleyin.
       </div>
 
       <!-- SAAT KUTUCUKLARI GRİDİ -->
@@ -255,7 +254,7 @@
             <strong id="summary-private" class="text-2xl font-industrial font-extrabold text-white mt-1">0</strong>
           </div>
           <div class="bg-input border border-zinc-800 px-2 py-2.5 text-center flex flex-col justify-between">
-            <span class="text-zinc-400 font-bold uppercase text-[10px] sm:text-xs">ORTAK DERS (2K)</span>
+            <span class="text-zinc-400 font-bold uppercase text-[10px] sm:text-xs">ORTAK DERS (5K)</span>
             <strong id="summary-shared" class="text-2xl font-industrial font-extrabold text-amber-400 mt-1">0</strong>
           </div>
         </div>
@@ -499,14 +498,14 @@
     <main class="max-w-xl mx-auto px-4 pt-6">
       <div class="bg-panel border-2 border-zinc-800 p-6">
         
-        <div class="mb-3">
+        <div id="detail-delete-row" class="mb-3 flex justify-end">
           <button 
             type="button"
-            id="detail-back-btn"
-            onclick="handleDetailBack()" 
-            class="inline-flex items-center gap-1.5 text-xs font-bold uppercase px-3 py-1.5 bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 cursor-pointer"
+            id="detail-delete-btn"
+            onclick="openDeleteMemberModal(selectedMemberId)" 
+            class="inline-flex items-center gap-1.5 text-xs font-bold uppercase px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white cursor-pointer"
           >
-            ← Geri Dön
+            SİL
           </button>
         </div>
 
@@ -553,7 +552,7 @@
             </div>
           </div>
 
-          <div>
+          <div id="det-password-section">
             <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">GİRİŞ ŞİFRESİ</label>
             <div class="flex gap-2">
               <input 
@@ -585,14 +584,16 @@
         <div id="detail-view-actions" class="flex items-center justify-between pt-6 mt-6 border-t-2 border-zinc-800">
           <button 
             type="button"
-            onclick="openDeleteMemberModal(selectedMemberId)" 
-            class="bg-red-600 hover:bg-red-700 text-white font-industrial font-extrabold text-lg uppercase px-6 py-2.5 tracking-wider cursor-pointer"
+            id="detail-back-btn"
+            onclick="handleDetailBack()" 
+            class="bg-zinc-900 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700 hover:border-zinc-500 font-industrial font-extrabold text-lg uppercase px-6 py-2.5 tracking-wider cursor-pointer"
           >
-            SİL
+            ← LİSTEYE DÖN
           </button>
 
           <button 
             type="button"
+            id="detail-edit-btn"
             onclick="enableMemberEditMode()" 
             class="bg-white hover:bg-zinc-200 text-black font-industrial font-extrabold text-lg uppercase px-6 py-2.5 tracking-wider cursor-pointer"
           >
@@ -666,10 +667,10 @@
       <!-- Durum 2: 20:00-23:59 Arası Ama Hoca Henüz Saat Girmedi -->
       <div id="member-state-noslots" class="hidden bg-panel border-2 border-zinc-800 p-10 text-center">
         <h3 class="font-industrial text-3xl font-extrabold uppercase text-white mb-2">
-          Uygun saatler henüz belirlenmemiştir. Daha sonra tekrar deneyiniz
+          Uygun saatler henüz belirlenmemiştir.<br>Daha sonra tekrar deneyiniz
         </h3>
         <p class="text-xs text-zinc-400 max-w-md mx-auto">
-          Antrenörünüz ertesi gün için uygun saat girişini tamamladığında bu ekrandan seçim yapabilirsiniz.
+          Antrenörünüz saat girişini tamamladığında seçim yapabileceksiniz.
         </p>
       </div>
 
@@ -681,7 +682,7 @@
           </span>
           <div class="flex items-center gap-3 shrink-0">
             <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-white inline-block"></span> Özel Ders (1 Kişi)</span>
-            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-amber-500 inline-block"></span> Ortak Ders (Maks 2 Kişi)</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-amber-500 inline-block"></span> Ortak Ders (Maks 5 Kişi)</span>
           </div>
         </div>
 
@@ -776,7 +777,7 @@
           type="text" 
           inputmode="numeric"
           id="renew-total-input" 
-          value="12" 
+          value="18" 
           oninput="sanitizeTwoDigitNumber(this)"
           class="w-full bg-input border-2 border-zinc-700 focus:border-amber-500 text-white px-3 py-3 text-lg font-mono outline-none"
         />
@@ -1030,12 +1031,12 @@
 
         const { data: userRow, error } = await supabaseClient
           .from('members')
-          .select('id, role, status, email, password')
+          .select('id, role, status, email')
           .ilike('email', authData.user.email || emailVal)
           .maybeSingle();
 
         if (error || !userRow) {
-          errEl.textContent = 'Üye kaydı bulunamadı!';
+          errEl.textContent = 'Üye kaydı bulunamadı!' + (error ? ` (${error.message})` : '');
           errEl.classList.remove('hidden');
           return;
         }
@@ -1047,16 +1048,13 @@
           return;
         }
 
-        if (!userRow.password) {
-          await supabaseClient.rpc('sync_own_password_display', { p_password: passVal });
-        }
-
         const roleKey = userRow.role === 'Admin' ? 'admin' : 'member';
 
-        // "Şifreyi Kaydet" seçiliyse sadece e-posta bilgisini kutuda hazır gelmesi için kaydet (şifre düz metin saklanmaz)
+        // "Şifreyi Kaydet" seçiliyse giriş bilgilerini kutularda hazır gelmesi için kaydet
         if (rememberMe) {
           localStorage.setItem('yasinRezSavedCreds', JSON.stringify({
-            email: emailVal
+            email: emailVal,
+            password: passVal
           }));
         } else {
           localStorage.removeItem('yasinRezSavedCreds');
@@ -1277,7 +1275,7 @@
           <div class="flex justify-between border-b border-zinc-800 py-1">
             <span>${s.label}</span>
             <span class="${s.isShared ? 'text-amber-400 font-bold' : 'text-zinc-400'}">
-              ${s.isShared ? 'Ortak Ders (2 Kişi)' : 'Özel Ders (1 Kişi)'}
+              ${s.isShared ? 'Ortak Ders (5 Kişi)' : 'Özel Ders (1 Kişi)'}
             </span>
           </div>
         `).join('');
@@ -1290,6 +1288,7 @@
       const selectedSlots = adminTimeSlots.filter(s => s.selected);
       const unselectedHours = adminTimeSlots.filter(s => !s.selected).map(s => s.id);
 
+      setLoginLoadingState(true);
       try {
         if (unselectedHours.length > 0) {
           await supabaseClient
@@ -1305,7 +1304,7 @@
             hour_index: s.id,
             hour_label: s.label,
             is_shared: s.isShared,
-            max_capacity: s.isShared ? 2 : 1
+            max_capacity: s.isShared ? 5 : 1
           }));
 
           const { error } = await supabaseClient
@@ -1322,6 +1321,8 @@
         showToast('SAATLER KAYDEDİLDİ', `${formatISOToTurkishLong(targetDateISO)} tarihine ait boş ders saatleri veritabanına başarıyla kaydedildi.`);
       } catch (err) {
         alert('Saatler kaydedilirken hata oluştu: ' + err.message);
+      } finally {
+        setLoginLoadingState(false);
       }
     }
 
@@ -1557,45 +1558,49 @@
       const remaining = total - completed;
       const password = document.getElementById('nm-password').value;
 
-      // Admin oturumunu bozmadan yeni üyeyi Supabase Auth üzerinde oluştur
-      const tempAuthClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
-      });
+      setLoginLoadingState(true);
+      try {
+        // Admin oturumunu bozmadan yeni üyeyi Supabase Auth üzerinde oluştur
+        const tempAuthClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+        });
 
-      const { error: authError } = await tempAuthClient.auth.signUp({
-        email,
-        password
-      });
-
-      if (authError) {
-        alert('Supabase Auth kullanıcı kaydı sırasında hata oluştu: ' + authError.message);
-        return;
-      }
-
-      const { error } = await supabaseClient
-        .from('members')
-        .insert([{
-          first_name: firstName,
-          last_name: lastName,
-          phone,
+        const { error: authError } = await tempAuthClient.auth.signUp({
           email,
-          password,
-          total_lessons: total,
-          completed_lessons: completed,
-          remaining_lessons: remaining,
-          role: 'Member',
-          status: 'Active'
-        }]);
+          password
+        });
 
-      if (error) {
-        alert('Üye kaydedilirken hata oluştu: ' + error.message);
-        return;
+        if (authError) {
+          alert('Supabase Auth kullanıcı kaydı sırasında hata oluştu: ' + authError.message);
+          return;
+        }
+
+        const { error } = await supabaseClient
+          .from('members')
+          .insert([{
+            first_name: firstName,
+            last_name: lastName,
+            phone,
+            email,
+            total_lessons: total,
+            completed_lessons: completed,
+            remaining_lessons: remaining,
+            role: 'Member',
+            status: 'Active'
+          }]);
+
+        if (error) {
+          alert('Üye kaydedilirken hata oluştu: ' + error.message);
+          return;
+        }
+
+        closeModal('new-member-confirm-modal');
+        await loadAllDataFromSupabase();
+        switchScreen('members');
+        showToast('ÜYE KAYDEDİLDİ', `${firstName} ${lastName} veritabanına "Aktif" statüyle eklendi (${completed}/${total}). Şifresi: ${password}`);
+      } finally {
+        setLoginLoadingState(false);
       }
-
-      closeModal('new-member-confirm-modal');
-      await loadAllDataFromSupabase();
-      switchScreen('members');
-      showToast('ÜYE KAYDEDİLDİ', `${firstName} ${lastName} veritabanına "Aktif" statüyle eklendi (${completed}/${total}). Şifresi: ${password}`);
     }
 
     function openMemberDetail(id) {
@@ -1607,9 +1612,13 @@
       setMemberDetailEditState(false);
 
       if (currentRole === 'member') {
-        document.getElementById('detail-view-actions').classList.add('hidden');
+        document.getElementById('detail-delete-row').classList.add('hidden');
+        document.getElementById('detail-edit-btn').classList.add('hidden');
+        document.getElementById('detail-view-actions').classList.remove('hidden');
         document.getElementById('detail-back-btn').textContent = '← Ders Seçimine Dön';
       } else {
+        document.getElementById('detail-delete-row').classList.remove('hidden');
+        document.getElementById('detail-edit-btn').classList.remove('hidden');
         document.getElementById('detail-view-actions').classList.remove('hidden');
         document.getElementById('detail-back-btn').textContent = '← Listeye Dön';
       }
@@ -1643,7 +1652,7 @@
       if (passInput) {
         const displayPass = m.password || (m.id === currentMemberId ? currentSessionPassword : '');
         passInput.value = displayPass;
-        passInput.placeholder = displayPass ? '' : 'Şifre belirlemek için Güncelle > Yenile tıklayın';
+        passInput.placeholder = '';
         if (currentRole === 'member') {
           passInput.type = 'text';
           if (toggleBtn) {
@@ -1653,8 +1662,12 @@
         } else {
           passInput.type = 'password';
           if (toggleBtn) {
-            toggleBtn.classList.remove('hidden');
-            toggleBtn.textContent = 'GÖSTER';
+            if (displayPass) {
+              toggleBtn.classList.remove('hidden');
+              toggleBtn.textContent = 'GÖSTER';
+            } else {
+              toggleBtn.classList.add('hidden');
+            }
           }
         }
       }
@@ -1686,25 +1699,33 @@
 
       const newPassword = createRandom8CharPassword();
 
-      const { error } = await supabaseClient.rpc('admin_renew_member_password', {
-        p_member_id: selectedMemberId,
-        p_new_password: newPassword
-      });
+      setLoginLoadingState(true);
+      try {
+        const { error } = await supabaseClient.rpc('admin_renew_member_password', {
+          p_member_id: selectedMemberId,
+          p_new_password: newPassword
+        });
 
-      if (error) {
-        alert('Şifre yenilenirken hata oluştu: ' + error.message);
-        return;
+        if (error) {
+          alert('Şifre yenilenirken hata oluştu: ' + error.message);
+          return;
+        }
+
+        m.password = newPassword;
+        const passInput = document.getElementById('det-password');
+        const toggleBtn = document.getElementById('det-btn-toggle-pass');
+        passInput.value = newPassword;
+        passInput.type = 'text';
+        if (toggleBtn) {
+          toggleBtn.classList.remove('hidden');
+          toggleBtn.textContent = 'GİZLE';
+        }
+
+        closeModal('renew-password-confirm-modal');
+        showToast('ŞİFRE YENİLENDİ', `${m.firstName} ${m.lastName} için yeni şifre oluşturuldu ve kaydedildi: ${newPassword}`);
+      } finally {
+        setLoginLoadingState(false);
       }
-
-      m.password = newPassword;
-      const passInput = document.getElementById('det-password');
-      const toggleBtn = document.getElementById('det-btn-toggle-pass');
-      passInput.value = newPassword;
-      passInput.type = 'text';
-      if (toggleBtn) toggleBtn.textContent = 'GİZLE';
-
-      closeModal('renew-password-confirm-modal');
-      showToast('ŞİFRE YENİLENDİ', `${m.firstName} ${m.lastName} için yeni şifre oluşturuldu ve kaydedildi: ${newPassword}`);
     }
 
     function setMemberDetailEditState(isEditing) {
@@ -1722,11 +1743,21 @@
       });
 
       document.getElementById('detail-mode-badge').textContent = isEditing ? 'ÜYE BİLGİLERİNİ GÜNCELLEME MODU' : 'ÜYE PROFİL DETAYI';
+      const passSection = document.getElementById('det-password-section');
+      if (passSection) {
+        if (currentRole === 'admin') {
+          passSection.classList.toggle('hidden', !isEditing);
+        } else {
+          passSection.classList.remove('hidden');
+        }
+      }
+
       const renewPassBtn = document.getElementById('det-btn-renew-pass');
       if (renewPassBtn) {
         renewPassBtn.classList.toggle('hidden', !(currentRole === 'admin' && isEditing));
       }
       if (currentRole === 'admin') {
+        document.getElementById('detail-delete-row').classList.toggle('hidden', isEditing);
         document.getElementById('detail-view-actions').classList.toggle('hidden', isEditing);
         document.getElementById('detail-edit-actions').classList.toggle('hidden', !isEditing);
       }
@@ -1743,6 +1774,7 @@
     }
 
     async function saveMemberChanges() {
+      if (currentRole !== 'admin') return;
       const m = members.find(item => item.id === selectedMemberId);
       if (!m) return;
 
@@ -1760,20 +1792,21 @@
       const email = document.getElementById('det-email').value.trim().toLowerCase();
       const total = Math.min(99, Math.max(0, parseInt(document.getElementById('det-total').value, 10) || 0));
       const completed = Math.min(99, Math.max(0, parseInt(document.getElementById('det-completed').value, 10) || 0));
-      const remaining = total - completed;
 
-      const { error } = await supabaseClient
-        .from('members')
-        .update({
-          first_name: firstName,
-          last_name: lastName,
-          phone,
-          email,
-          total_lessons: total,
-          completed_lessons: completed,
-          remaining_lessons: remaining
-        })
-        .eq('id', selectedMemberId);
+      if (!firstName || !lastName || !email) {
+        alert('Ad, Soyad ve E-Posta alanları boş bırakılamaz.');
+        return;
+      }
+
+      const { error } = await supabaseClient.rpc('admin_update_member', {
+        p_member_id: selectedMemberId,
+        p_first_name: firstName,
+        p_last_name: lastName,
+        p_phone: phone,
+        p_email: email,
+        p_total_lessons: total,
+        p_completed_lessons: completed
+      });
 
       if (error) {
         alert('Güncelleme hatası: ' + error.message);
@@ -1799,20 +1832,25 @@
       const m = members.find(item => item.id === deleteTargetMemberId);
       if (!m) return;
 
-      const { error } = await supabaseClient
-        .from('members')
-        .update({ status: 'Passive' })
-        .eq('id', deleteTargetMemberId);
+      setLoginLoadingState(true);
+      try {
+        const { error } = await supabaseClient
+          .from('members')
+          .update({ status: 'Passive' })
+          .eq('id', deleteTargetMemberId);
 
-      if (error) {
-        alert('Silme hatası: ' + error.message);
-        return;
+        if (error) {
+          alert('Silme hatası: ' + error.message);
+          return;
+        }
+
+        closeModal('delete-member-modal');
+        await loadAllDataFromSupabase();
+        switchScreen('members');
+        showToast('ÜYE PASİFE ALINDI', `${m.firstName} ${m.lastName} adlı üyenin statüsü veritabanında "Passive" olarak güncellendi.`);
+      } finally {
+        setLoginLoadingState(false);
       }
-
-      closeModal('delete-member-modal');
-      await loadAllDataFromSupabase();
-      switchScreen('members');
-      showToast('ÜYE PASİFE ALINDI', `${m.firstName} ${m.lastName} adlı üyenin statüsü veritabanında "Passive" olarak güncellendi.`);
     }
 
     function openRenewModal(memberId) {
@@ -1821,7 +1859,7 @@
       if (!m) return;
 
       document.getElementById('renew-member-name').textContent = `${m.firstName} ${m.lastName}`;
-      document.getElementById('renew-total-input').value = m.totalLessons;
+      document.getElementById('renew-total-input').value = '18';
       document.getElementById('renew-package-modal').classList.remove('hidden');
     }
 
@@ -1834,24 +1872,29 @@
       }
       const newTotal = Math.min(99, Math.max(0, parseInt(rawVal, 10)));
 
-      const { error } = await supabaseClient
-        .from('members')
-        .update({
-          total_lessons: newTotal,
-          remaining_lessons: newTotal,
-          completed_lessons: 0
-        })
-        .eq('id', renewTargetMemberId);
+      setLoginLoadingState(true);
+      try {
+        const { error } = await supabaseClient
+          .from('members')
+          .update({
+            total_lessons: newTotal,
+            remaining_lessons: newTotal,
+            completed_lessons: 0
+          })
+          .eq('id', renewTargetMemberId);
 
-      if (error) {
-        alert('Paket yenileme hatası: ' + error.message);
-        return;
+        if (error) {
+          alert('Paket yenileme hatası: ' + error.message);
+          return;
+        }
+
+        closeModal('renew-package-modal');
+        await loadAllDataFromSupabase();
+        renderMembersList();
+        showToast('PAKET YENİLENDİ', `${m.firstName} ${m.lastName} için ders paketi 0/${newTotal} (Tamamlanan/Toplam) olarak yenilendi.`);
+      } finally {
+        setLoginLoadingState(false);
       }
-
-      closeModal('renew-package-modal');
-      await loadAllDataFromSupabase();
-      renderMembersList();
-      showToast('PAKET YENİLENDİ', `${m.firstName} ${m.lastName} için ders paketi 0/${newTotal} (Tamamlanan/Toplam) olarak yenilendi.`);
     }
 
 
@@ -1905,10 +1948,19 @@
 
       if (currentSlot && (memberSimMode === 'OPEN_WINDOW' || memberSimMode === 'AFTER_MIDNIGHT')) {
         activeResBox.classList.remove('hidden');
-        const lessonTypeLabel = currentSlot.isShared ? 'ORTAK DERS (2 KİŞİLİK)' : 'ÖZEL DERS (1 KİŞİLİK)';
+        const lessonTypeLabel = currentSlot.isShared ? 'ORTAK DERS (5 KİŞİLİK)' : 'ÖZEL DERS (1 KİŞİLİK)';
         const cancelNotice = memberSimMode === 'AFTER_MIDNIGHT'
           ? 'Saat 23:59 geçtiği için iptal etmeniz durumunda ders yapılmış sayılacak ve ders hakkınız iade edilmeyecektir.'
           : 'Günde maksimum 1 ders seçebilirsiniz. Saat 23:59\'a kadar aşağıdaki boş saatlerden birine tıklayarak mevcut saatinizi değiştirebilir veya dersinizden vazgeçebilirsiniz.';
+
+        const activePartners = currentSlot.isShared
+          ? currentSlot.bookings
+              .filter(b => b.status === 'booked' && b.memberId !== currentMemberId && b.partnerName)
+              .map(b => escapeHtml(b.partnerName))
+          : [];
+        const activePartnersHtml = activePartners.length > 0
+          ? `<div class="text-xs text-amber-400 font-semibold mt-1">Bu dersi seçen ortak ders arkadaşınız: <span class="text-white font-bold">${activePartners.join(', ')}</span></div>`
+          : '';
 
         activeResBox.innerHTML = `
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1920,6 +1972,7 @@
               <div class="font-industrial text-3xl font-extrabold text-white tracking-wider">
                 ${currentSlot.label}
               </div>
+              ${activePartnersHtml}
               <p class="text-xs text-zinc-400 mt-1">${cancelNotice}</p>
             </div>
             <button 
@@ -1955,7 +2008,7 @@
 
       const availableSlots = coachEnteredSlots.filter(slot => {
         const activeCount = slot.bookings.filter(b => b.status === 'booked').length;
-        const maxCap = slot.isShared ? 2 : 1;
+        const maxCap = slot.isShared ? 5 : 1;
         const isPickedByMe = slot.bookings.some(b => b.memberId === currentMemberId && b.status === 'booked');
         return activeCount < maxCap && !isPickedByMe;
       });
@@ -1976,12 +2029,22 @@
 
       availableSlots.forEach(slot => {
         const activeCount = slot.bookings.filter(b => b.status === 'booked').length;
-        const maxCap = slot.isShared ? 2 : 1;
-        const remainingSpots = maxCap - activeCount;
+        const maxCap = slot.isShared ? 5 : 1;
 
         const badgeHtml = slot.isShared
-          ? `<span class="bg-amber-500 text-black text-[10px] font-extrabold px-2 py-0.5 uppercase">ORTAK DERS • ${remainingSpots}/${maxCap} MÜSAİT</span>`
-          : `<span class="bg-white text-black text-[10px] font-extrabold px-2 py-0.5 uppercase">ÖZEL DERS</span>`;
+          ? `<span class="bg-amber-500 text-black text-[10px] font-extrabold px-2 py-0.5 uppercase whitespace-nowrap">ORTAK DERS ${activeCount}/${maxCap}</span>`
+          : `<span class="bg-white text-black text-[10px] font-extrabold px-2 py-0.5 uppercase whitespace-nowrap">ÖZEL DERS</span>`;
+
+        const knownPartners = slot.isShared
+          ? slot.bookings
+              .filter(b => b.status === 'booked' && b.memberId !== currentMemberId && b.partnerName)
+              .map(b => escapeHtml(b.partnerName))
+          : [];
+        const partnersHtml = knownPartners.length > 0
+          ? `<div class="mt-2 pt-2 border-t border-zinc-800 text-xs text-amber-400 font-semibold">
+               Seçen: <span class="text-white font-bold">${knownPartners.join(', ')}</span>
+             </div>`
+          : '';
 
         const borderClass = slot.isShared ? 'border-amber-500/70' : 'border-zinc-700';
         const actionBtnLabel = hasExistingBooking ? 'BU SAAT İLE DEĞİŞTİR' : 'SEÇ';
@@ -1991,12 +2054,13 @@
         card.innerHTML = `
           <div>
             <div class="flex items-center justify-between mb-2">
-              <span class="text-[10px] font-mono uppercase text-zinc-400">MÜSAİT SAAT</span>
+              <span class="text-[10px] font-mono uppercase text-zinc-400 whitespace-nowrap">MÜSAİT SAAT</span>
               ${badgeHtml}
             </div>
             <div class="font-industrial text-3xl font-extrabold text-white tracking-wider">
               ${slot.label}
             </div>
+            ${partnersHtml}
           </div>
 
           <button 
@@ -2041,6 +2105,7 @@
       const currentSlot = getMemberCurrentBookingSlot(currentMemberId);
       if (!m || !targetSlot || !targetSlot.dbSlotId) return;
 
+      setLoginLoadingState(true);
       try {
         const { data: result, error } = await supabaseClient.rpc('member_book_slot', {
           p_target_slot_id: targetSlot.dbSlotId
@@ -2061,6 +2126,8 @@
         }
       } catch (err) {
         alert('Rezervasyon işlemi sırasında hata: ' + err.message);
+      } finally {
+        setLoginLoadingState(false);
       }
     }
 
@@ -2087,6 +2154,7 @@
       const bookingObj = currentSlot.bookings.find(b => b.memberId === currentMemberId && b.status === 'booked');
       if (!bookingObj) return;
 
+      setLoginLoadingState(true);
       try {
         const { data: result, error } = await supabaseClient.rpc('member_cancel_booking', {
           p_booking_id: bookingObj.id
@@ -2107,6 +2175,8 @@
         }
       } catch (err) {
         alert('İptal işlemi sırasında hata: ' + err.message);
+      } finally {
+        setLoginLoadingState(false);
       }
     }
 
@@ -2123,12 +2193,18 @@
       document.getElementById('toast-modal').classList.remove('hidden');
     }
 
-    // Sayfa Açıldığında Kayıtlı Giriş Bilgilerini Kutulara Doldur (Otomatik Giriş Yapma)
-    function initApp() {
+    // Sayfa Açıldığında Kayıtlı Giriş Bilgileri Varsa Otomatik Giriş Yap
+    async function initApp() {
       updateTopLiveClock();
       localStorage.removeItem('yasinRezSession');
       loadSavedLoginCredentials();
       switchScreen('login');
+
+      const emailVal = document.getElementById('login-email').value.trim();
+      const passVal = document.getElementById('login-password').value.trim();
+      if (emailVal && passVal) {
+        await handleLogin();
+      }
     }
 
     // Uygulamayı başlat

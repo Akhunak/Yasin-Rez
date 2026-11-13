@@ -55,9 +55,11 @@ function isValidTurkishMobile(phoneStr) {
 
 function createRandom8CharPassword() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const randomValues = new Uint32Array(8);
+  window.crypto.getRandomValues(randomValues);
   let pass = '';
   for (let i = 0; i < 8; i++) {
-    pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    pass += chars.charAt(randomValues[i] % chars.length);
   }
   return pass;
 }

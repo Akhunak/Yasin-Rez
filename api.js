@@ -17,7 +17,7 @@ async function loadAllDataFromSupabase() {
   try {
     let query = supabaseClient
       .from('members')
-      .select('id, first_name, last_name, phone, email, password, total_lessons, completed_lessons, remaining_lessons, role, status');
+      .select('*');
 
     // Giriş yapan kişi "üye" ise SADECE KENDİ ID'sine ait veriyi çek (diğer üyelerin bilgileri gelmez)
     if (currentRole === 'member') {
@@ -97,10 +97,19 @@ async function loadAdminSlotsForDate(targetDateISO) {
 async function loadTomorrowSlotsFromSupabase() {
   const tomorrowISO = getDateISO(1);
 
-  const { data: slotRows, error: slotErr } = await supabaseClient
-    .from('daily_slots')
-    .select('*, bookings(*)')
-    .eq('slot_date', tomorrowISO);
+  let { data: slotRows, error: slotErr } = await supabaseClient.rpc('get_slots_for_member', {
+    p_slot_date: tomorrowISO
+  });
+
+  // Eğer veritabanında get_slots_for_member RPC fonksiyonu henüz oluşturulmamışsa doğrudan daily_slots sorgusuna geri dön
+  if (slotErr) {
+    const fallbackRes = await supabaseClient
+      .from('daily_slots')
+      .select('*, bookings(*)')
+      .eq('slot_date', tomorrowISO);
+    slotRows = fallbackRes.data;
+    slotErr = fallbackRes.error;
+  }
 
   if (slotErr) throw slotErr;
 
@@ -114,7 +123,8 @@ async function loadTomorrowSlotsFromSupabase() {
         id: b.id,
         memberId: b.member_id,
         status: b.status,
-        lessonProgress: b.lesson_progress
+        lessonProgress: b.lesson_progress || null,
+        partnerName: b.partner_name || null
       }));
     } else {
       s.dbSlotId = null;
@@ -155,6 +165,7 @@ async function confirmSaveSlots() {
   const selectedSlots = adminTimeSlots.filter(s => s.selected);
   const unselectedHours = adminTimeSlots.filter(s => !s.selected).map(s => s.id);
 
+  if (typeof setLoginLoadingState === 'function') setLoginLoadingState(true);
   try {
     if (unselectedHours.length > 0) {
       await supabaseClient
@@ -170,7 +181,7 @@ async function confirmSaveSlots() {
         hour_index: s.id,
         hour_label: s.label,
         is_shared: s.isShared,
-        max_capacity: s.isShared ? 2 : 1
+        max_capacity: s.isShared ? 5 : 1
       }));
 
       const { error } = await supabaseClient
@@ -187,6 +198,8 @@ async function confirmSaveSlots() {
     showToast('SAATLER KAYDEDİLDİ', `${formatISOToTurkishLong(targetDateISO)} tarihine ait boş ders saatleri veritabanına başarıyla kaydedildi.`);
   } catch (err) {
     alert('Saatler kaydedilirken hata oluştu: ' + err.message);
+  } finally {
+    if (typeof setLoginLoadingState === 'function') setLoginLoadingState(false);
   }
 }
 
@@ -222,7 +235,6 @@ async function confirmCreateMember() {
       last_name: lastName,
       phone,
       email,
-      password,
       total_lessons: total,
       completed_lessons: completed,
       remaining_lessons: remaining,
@@ -263,13 +275,17 @@ async function confirmRenewMemberPassword() {
   const toggleBtn = document.getElementById('det-btn-toggle-pass');
   passInput.value = newPassword;
   passInput.type = 'text';
-  if (toggleBtn) toggleBtn.textContent = 'GİZLE';
+  if (toggleBtn) {
+    toggleBtn.classList.remove('hidden');
+    toggleBtn.textContent = 'GİZLE';
+  }
 
   closeModal('renew-password-confirm-modal');
   showToast('ŞİFRE YENİLENDİ', `${m.firstName} ${m.lastName} için yeni şifre oluşturuldu ve kaydedildi: ${newPassword}`);
 }
 
 async function saveMemberChanges() {
+  if (currentRole !== 'admin') return;
   const m = members.find(item => item.id === selectedMemberId);
   if (!m) return;
 
@@ -287,20 +303,21 @@ async function saveMemberChanges() {
   const email = document.getElementById('det-email').value.trim().toLowerCase();
   const total = Math.min(99, Math.max(0, parseInt(document.getElementById('det-total').value, 10) || 0));
   const completed = Math.min(99, Math.max(0, parseInt(document.getElementById('det-completed').value, 10) || 0));
-  const remaining = total - completed;
 
-  const { error } = await supabaseClient
-    .from('members')
-    .update({
-      first_name: firstName,
-      last_name: lastName,
-      phone,
-      email,
-      total_lessons: total,
-      completed_lessons: completed,
-      remaining_lessons: remaining
-    })
-    .eq('id', selectedMemberId);
+  if (!firstName || !lastName || !email) {
+    alert('Ad, Soyad ve E-Posta alanları boş bırakılamaz.');
+    return;
+  }
+
+  const { error } = await supabaseClient.rpc('admin_update_member', {
+    p_member_id: selectedMemberId,
+    p_first_name: firstName,
+    p_last_name: lastName,
+    p_phone: phone,
+    p_email: email,
+    p_total_lessons: total,
+    p_completed_lessons: completed
+  });
 
   if (error) {
     alert('Güncelleme hatası: ' + error.message);
