@@ -395,3 +395,15 @@ input[type="checkbox"] {
 @media (min-width: 768px) {
   .md\:inline { display: inline; }
 }
+
+/* Mobil Safari Otomatik Yakınlaştırma (Auto-Zoom) ve Yatay Taşma Önleme */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
