@@ -1398,12 +1398,12 @@
             const fullName = escapeHtml(b.members ? `${b.members.first_name} ${b.members.last_name}` : 'Üye');
             const safeProgress = escapeHtml(b.lesson_progress);
             if (b.status === 'late_cancelled') {
-              return `<span class="line-through text-red-400/80 decoration-2">${fullName} - ${safeProgress}</span>`;
+              return `<div><span class="line-through text-red-400/80 decoration-2">${fullName} - ${safeProgress}</span></div>`;
             }
-            return `<span class="text-white font-bold">${fullName}</span> <span class="text-zinc-400 font-mono font-semibold">- ${safeProgress}</span>`;
+            return `<div><span class="text-white font-bold">${fullName}</span> <span class="text-zinc-400 font-mono font-semibold">- ${safeProgress}</span></div>`;
           });
 
-          displayHtml = parts.join(' <span class="text-zinc-500 font-bold mx-1">&amp;</span> ');
+          displayHtml = `<div class="space-y-1">${parts.join('')}</div>`;
           borderClass = 'border-zinc-800';
           badgeHtml = `<span class="bg-amber-500 text-black font-industrial text-base sm:text-lg font-extrabold px-3.5 py-1 uppercase tracking-wider inline-block">ORTAK DERS</span>`;
         }
@@ -1412,7 +1412,7 @@
         row.className = `bg-panel border-2 ${borderClass} p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3`;
         row.innerHTML = `
           <div class="flex items-center gap-4">
-            <div class="bg-input border border-zinc-800 px-3 py-2 font-industrial text-xl font-extrabold text-white tracking-wider min-w-[125px] text-center">
+            <div style="min-width: 135px; white-space: nowrap; flex-shrink: 0;" class="bg-input border border-zinc-800 px-3 py-2 font-industrial text-xl font-extrabold text-white tracking-wider min-w-[125px] text-center shrink-0 whitespace-nowrap">
               ${escapeHtml(slot.hour_label)}
             </div>
             <div class="text-sm sm:text-base">

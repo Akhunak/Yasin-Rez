@@ -172,7 +172,7 @@ input[type="checkbox"] {
 .w-12 { width: 3rem; }
 .w-72 { width: 18rem; }
 .w-full { width: 100%; }
-.min-w-\[125px\] { min-width: 125px; }
+.min-w-\[125px\] { min-width: 135px; white-space: nowrap; flex-shrink: 0; }
 .max-w-sm { max-width: 24rem; }
 .max-w-md { max-width: 28rem; }
 .max-w-lg { max-width: 32rem; }
