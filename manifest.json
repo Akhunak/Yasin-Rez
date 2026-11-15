@@ -1,0 +1,19 @@
+{
+  "name": "Avicii Training",
+  "short_name": "Avicii Training",
+  "description": "Avicii Training Ders Rezervasyon Sistemi",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#121215",
+  "theme_color": "#121215",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
