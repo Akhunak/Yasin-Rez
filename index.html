@@ -3,10 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://hiarwdthivcmgabhhjjh.supabase.co wss://hiarwdthivcmgabhhjjh.supabase.co; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://hiarwdthivcmgabhhjjh.supabase.co wss://hiarwdthivcmgabhhjjh.supabase.co; img-src 'self' data:; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
   <title>Avicii Training</title>
+  <meta name="theme-color" content="#121215">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Avicii Training">
   <meta name="application-name" content="Avicii Training">
+  <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="favicon.png">
   <!-- Supabase JavaScript SDK CDN (Sabit Sürüm & SRI Korumalı) -->
@@ -56,6 +60,9 @@
         </button>
         <button type="button" id="nav-members" onclick="switchScreen('members')" class="font-bold text-xs uppercase px-3 py-2 border cursor-pointer">
           Üyeler
+        </button>
+        <button type="button" id="admin-push-btn" onclick="enableAdminPushNotifications()" class="bg-input text-amber-400 hover:border-amber-500 font-bold text-xs uppercase px-3 py-2 border border-zinc-700 cursor-pointer">
+          Bildirim Aç
         </button>
         <button type="button" onclick="logoutUser()" class="bg-zinc-900 text-red-400 hover:border-red-500 font-bold text-xs uppercase px-3 py-2 border border-zinc-700 cursor-pointer">
           Çıkış
@@ -652,7 +659,10 @@
         </div>
       </div>
 
-      <!-- Aktif Seçilmiş Ders Kutusu -->
+      <!-- Bugünkü Aktif Seçilmiş Ders Kutusu (Varsa) -->
+      <div id="member-today-reservation-box" class="hidden bg-panel border-2 border-amber-500 p-4 mb-6"></div>
+
+      <!-- Yarınki Aktif Seçilmiş Ders Kutusu -->
       <div id="member-active-reservation-box" class="hidden bg-panel border-2 border-emerald-500 p-4 mb-6"></div>
 
       <!-- Durum 1: Saat 20:00 Öncesi -->
@@ -961,8 +971,105 @@
 
     // Yasin Hoca'nın seçtiği güne ait saatler
     let adminTimeSlots = createEmptySlotsArray();
+    // Üyelerin bugünkü seçilmiş dersleri için saatler
+    let todayTimeSlots = createEmptySlotsArray();
     // Üyelerin ertesi gün için gördüğü saatler
     let timeSlots = createEmptySlotsArray();
+    let pendingCancelTargetDay = 'tomorrow';
+
+    const VAPID_PUBLIC_KEY = 'BDU9_5Dv1TJKTc0xf9g43loc_AmuJ2_n4koi2LwzfwUz8r1YMbMM8YeUAQ20tBR-_7FfB8G7g-FSesenOwm04h8';
+
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+      return outputArray;
+    }
+
+    function updateAdminPushButtonUI(isActive) {
+      const btn = document.getElementById('admin-push-btn');
+      if (!btn) return;
+      if (isActive) {
+        btn.textContent = 'Bildirim Aktif';
+        btn.className = 'bg-input text-emerald-400 border-emerald-500 font-bold text-xs uppercase px-3 py-2 border cursor-pointer';
+      } else {
+        btn.textContent = 'Bildirim Aç';
+        btn.className = 'bg-input text-amber-400 hover:border-amber-500 font-bold text-xs uppercase px-3 py-2 border border-zinc-700 cursor-pointer';
+      }
+    }
+
+    async function syncSubscriptionWithSupabase(sub) {
+      if (!sub) return;
+      const subJson = sub.toJSON();
+      if (!subJson || !subJson.endpoint || !subJson.keys) return;
+      await supabaseClient.rpc('save_admin_push_subscription', {
+        p_endpoint: subJson.endpoint,
+        p_p256dh: subJson.keys.p256dh,
+        p_auth: subJson.keys.auth,
+        p_user_agent: navigator.userAgent || ''
+      });
+    }
+
+    async function checkAdminPushSubscriptionState() {
+      if (currentRole !== 'admin') return;
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        const sub = await reg.pushManager.getSubscription();
+        if (sub && Notification.permission === 'granted') {
+          updateAdminPushButtonUI(true);
+          await syncSubscriptionWithSupabase(sub);
+        } else {
+          updateAdminPushButtonUI(false);
+        }
+      } catch (e) {
+        console.warn('Service worker kontrol hatası:', e);
+      }
+    }
+
+    async function enableAdminPushNotifications() {
+      if (currentRole !== 'admin') return;
+      if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+        alert('Bu tarayıcıda Web Push bildirimleri desteklenmiyor. iPhone kullanıyorsanız lütfen siteyi "Paylaş -> Ana Ekrana Ekle" ile ana ekrana ekleyip oradan açınız.');
+        return;
+      }
+
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          alert('Bildirim izni verilmedi. Tarayıcı veya telefon ayarlarından bildirim iznini etkinleştiriniz.');
+          return;
+        }
+
+        setLoginLoadingState(true);
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.ready;
+
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+          });
+        }
+
+        await syncSubscriptionWithSupabase(sub);
+        updateAdminPushButtonUI(true);
+        showToast('BİLDİRİMLER AKTİF', 'Bu cihazda anlık bildirimler (Push Notification) başarıyla etkinleştirildi.');
+      } catch (err) {
+        alert('Bildirim etkinleştirilirken hata oluştu: ' + err.message);
+      } finally {
+        setLoginLoadingState(false);
+      }
+    }
+
+    function triggerPushNotificationDispatch() {
+      fetch('/api/send-push', { method: 'POST' }).catch(() => {});
+    }
 
     // =========================================================================
     // 6. TEK FORMLU GİRİŞ, ŞİFRE KAYDETME & OTURUM (LOCAL STORAGE) YÖNETİMİ
@@ -1106,6 +1213,7 @@
       if (nameEl && adminUser) {
         nameEl.textContent = `${adminUser.firstName} ${adminUser.lastName}`;
       }
+      checkAdminPushSubscriptionState();
     }
 
     function updateMemberHeaderInfo() {
@@ -1559,39 +1667,19 @@
       const email = document.getElementById('nm-email').value.trim().toLowerCase();
       const total = Math.min(99, Math.max(0, parseInt(document.getElementById('nm-total').value, 10) || 0));
       const completed = Math.min(99, Math.max(0, parseInt(document.getElementById('nm-completed').value, 10) || 0));
-      const remaining = total - completed;
       const password = document.getElementById('nm-password').value;
 
       setLoginLoadingState(true);
       try {
-        // Admin oturumunu bozmadan yeni üyeyi Supabase Auth üzerinde oluştur
-        const tempAuthClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-          auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+        const { error } = await supabaseClient.rpc('admin_create_member', {
+          p_first_name: firstName,
+          p_last_name: lastName,
+          p_phone: phone,
+          p_email: email,
+          p_password: password,
+          p_total_lessons: total,
+          p_completed_lessons: completed
         });
-
-        const { error: authError } = await tempAuthClient.auth.signUp({
-          email,
-          password
-        });
-
-        if (authError) {
-          alert('Supabase Auth kullanıcı kaydı sırasında hata oluştu: ' + authError.message);
-          return;
-        }
-
-        const { error } = await supabaseClient
-          .from('members')
-          .insert([{
-            first_name: firstName,
-            last_name: lastName,
-            phone,
-            email,
-            total_lessons: total,
-            completed_lessons: completed,
-            remaining_lessons: remaining,
-            role: 'Member',
-            status: 'Active'
-          }]);
 
         if (error) {
           alert('Üye kaydedilirken hata oluştu: ' + error.message);
@@ -1905,6 +1993,10 @@
     // =========================================================================
     // 11. ÜYE - DERS SAATİ SEÇİM, DEĞİŞTİRME VE İPTAL (GERÇEK SAAT KONTROLLÜ)
     // =========================================================================
+    function getMemberTodayBookingSlot(memberId) {
+      return todayTimeSlots.find(s => s.bookings.some(b => b.memberId === memberId && b.status === 'booked')) || null;
+    }
+
     function getMemberCurrentBookingSlot(memberId) {
       return timeSlots.find(s => s.bookings.some(b => b.memberId === memberId && b.status === 'booked')) || null;
     }
@@ -1940,13 +2032,52 @@
       const stateNoSlots = document.getElementById('member-state-noslots');
       const stateOpen = document.getElementById('member-state-open');
       const stateAfterMidnight = document.getElementById('member-state-aftermidnight');
+      const todayResBox = document.getElementById('member-today-reservation-box');
       const activeResBox = document.getElementById('member-active-reservation-box');
 
       stateBefore20.classList.add('hidden');
       stateNoSlots.classList.add('hidden');
       stateOpen.classList.add('hidden');
       stateAfterMidnight.classList.add('hidden');
+      if (todayResBox) todayResBox.classList.add('hidden');
       activeResBox.classList.add('hidden');
+
+      const todaySlot = getMemberTodayBookingSlot(currentMemberId);
+      if (todaySlot && todayResBox) {
+        todayResBox.classList.remove('hidden');
+        const todayLessonType = todaySlot.isShared ? 'ORTAK DERS (5 KİŞİLİK)' : 'ÖZEL DERS (1 KİŞİLİK)';
+        const todayPartners = todaySlot.isShared
+          ? todaySlot.bookings
+              .filter(b => b.status === 'booked' && b.memberId !== currentMemberId && b.partnerName)
+              .map(b => escapeHtml(b.partnerName))
+          : [];
+        const todayPartnersHtml = todayPartners.length > 0
+          ? `<div class="text-xs text-amber-400 font-semibold mt-1">Bu dersi seçen ortak ders arkadaşınız: <span class="text-white font-bold">${todayPartners.join(', ')}</span></div>`
+          : '';
+
+        todayResBox.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="bg-amber-500 text-black text-[10px] font-extrabold px-2 py-0.5 uppercase">BUGÜNKÜ SEÇİLMİŞ DERSİNİZ (${getTurkishFormattedDate(0)})</span>
+                <span class="text-xs font-bold text-amber-400 uppercase">${todayLessonType}</span>
+              </div>
+              <div class="font-industrial text-3xl font-extrabold text-white tracking-wider">
+                ${todaySlot.label}
+              </div>
+              ${todayPartnersHtml}
+              <p class="text-xs text-zinc-400 mt-1">Saat 23:59 geçtiği için bugünkü dersinizi iptal etmeniz durumunda ders yapılmış sayılacak ve ders hakkınız iade edilmeyecektir.</p>
+            </div>
+            <button 
+              type="button"
+              onclick="openMemberCancelModal('today')" 
+              class="bg-red-600 hover:bg-red-700 text-white font-industrial font-extrabold text-lg uppercase px-5 py-2.5 tracking-wider cursor-pointer shrink-0"
+            >
+              BUGÜNKÜ DERSİ İPTAL ET
+            </button>
+          </div>
+        `;
+      }
 
       const currentSlot = getMemberCurrentBookingSlot(currentMemberId);
 
@@ -1981,7 +2112,7 @@
             </div>
             <button 
               type="button"
-              onclick="openMemberCancelModal()" 
+              onclick="openMemberCancelModal('tomorrow')" 
               class="bg-red-600 hover:bg-red-700 text-white font-industrial font-extrabold text-lg uppercase px-5 py-2.5 tracking-wider cursor-pointer shrink-0"
             >
               DERSTEN VAZGEÇ (İPTAL ET)
@@ -2117,6 +2248,8 @@
 
         if (error) throw error;
 
+        triggerPushNotificationDispatch();
+
         closeModal('member-book-confirm-modal');
         await loadAllDataFromSupabase();
         renderMemberBookingScreen();
@@ -2135,15 +2268,18 @@
       }
     }
 
-    function openMemberCancelModal() {
-      const currentSlot = getMemberCurrentBookingSlot(currentMemberId);
-      if (!currentSlot) return;
+    function openMemberCancelModal(targetDay = 'tomorrow') {
+      pendingCancelTargetDay = targetDay;
+      const targetSlot = targetDay === 'today'
+        ? getMemberTodayBookingSlot(currentMemberId)
+        : getMemberCurrentBookingSlot(currentMemberId);
+      if (!targetSlot) return;
 
-      if (memberSimMode === 'AFTER_MIDNIGHT') {
-        document.getElementById('cancel-modal-title').textContent = `${currentSlot.label} • GEÇ İPTAL (23:59 SONRASI)`;
+      if (targetDay === 'today' || memberSimMode === 'AFTER_MIDNIGHT') {
+        document.getElementById('cancel-modal-title').textContent = `${targetSlot.label} • GEÇ İPTAL (23:59 SONRASI)`;
         document.getElementById('cancel-modal-desc').textContent = 'Saat 23:59 geçtiği için bu dersi iptal etmeniz durumunda ders yapılmış sayılacak ve ders hakkınız iade edilmeyecektir. İptal işlemini onaylıyor musunuz?';
       } else {
-        document.getElementById('cancel-modal-title').textContent = `${currentSlot.label} • DERSTEN VAZGEÇME`;
+        document.getElementById('cancel-modal-title').textContent = `${targetSlot.label} • DERSTEN VAZGEÇME`;
         document.getElementById('cancel-modal-desc').textContent = 'Seçmiş olduğunuz ders saatinden vazgeçmek üzeresiniz. Saat tekrar boşa geçecek ve ders hakkınız iade edilecektir. Onaylıyor musunuz?';
       }
 
@@ -2152,7 +2288,9 @@
 
     async function confirmMemberCancelBooking() {
       const m = members.find(item => item.id === currentMemberId);
-      const currentSlot = getMemberCurrentBookingSlot(currentMemberId);
+      const currentSlot = pendingCancelTargetDay === 'today'
+        ? getMemberTodayBookingSlot(currentMemberId)
+        : getMemberCurrentBookingSlot(currentMemberId);
       if (!m || !currentSlot) return;
 
       const bookingObj = currentSlot.bookings.find(b => b.memberId === currentMemberId && b.status === 'booked');
@@ -2165,6 +2303,8 @@
         });
 
         if (error) throw error;
+
+        triggerPushNotificationDispatch();
 
         closeModal('member-cancel-confirm-modal');
         await loadAllDataFromSupabase();

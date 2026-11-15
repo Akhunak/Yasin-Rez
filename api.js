@@ -94,26 +94,26 @@ async function loadAdminSlotsForDate(targetDateISO) {
   });
 }
 
-async function loadTomorrowSlotsFromSupabase() {
-  const tomorrowISO = getDateISO(1);
-
+async function fetchSlotsForDateISO(dateISO) {
   let { data: slotRows, error: slotErr } = await supabaseClient.rpc('get_slots_for_member', {
-    p_slot_date: tomorrowISO
+    p_slot_date: dateISO
   });
 
-  // Eğer veritabanında get_slots_for_member RPC fonksiyonu henüz oluşturulmamışsa doğrudan daily_slots sorgusuna geri dön
   if (slotErr) {
     const fallbackRes = await supabaseClient
       .from('daily_slots')
       .select('*, bookings(*)')
-      .eq('slot_date', tomorrowISO);
+      .eq('slot_date', dateISO);
     slotRows = fallbackRes.data;
     slotErr = fallbackRes.error;
   }
 
   if (slotErr) throw slotErr;
+  return slotRows || [];
+}
 
-  timeSlots.forEach(s => {
+function mapSlotRowsIntoArray(slotRows, targetArray) {
+  targetArray.forEach(s => {
     const found = (slotRows || []).find(r => r.hour_index === s.id);
     if (found) {
       s.dbSlotId = found.id;
@@ -133,6 +133,21 @@ async function loadTomorrowSlotsFromSupabase() {
       s.bookings = [];
     }
   });
+}
+
+async function loadTomorrowSlotsFromSupabase() {
+  const todayISO = getDateISO(0);
+  const tomorrowISO = getDateISO(1);
+
+  const [todayRows, tomorrowRows] = await Promise.all([
+    fetchSlotsForDateISO(todayISO),
+    fetchSlotsForDateISO(tomorrowISO)
+  ]);
+
+  if (typeof todayTimeSlots !== 'undefined') {
+    mapSlotRowsIntoArray(todayRows, todayTimeSlots);
+  }
+  mapSlotRowsIntoArray(tomorrowRows, timeSlots);
 }
 
 async function authenticateUserFromDb(emailVal, passVal) {
@@ -210,37 +225,17 @@ async function confirmCreateMember() {
   const email = document.getElementById('nm-email').value.trim().toLowerCase();
   const total = Math.min(99, Math.max(0, parseInt(document.getElementById('nm-total').value, 10) || 0));
   const completed = Math.min(99, Math.max(0, parseInt(document.getElementById('nm-completed').value, 10) || 0));
-  const remaining = total - completed;
   const password = document.getElementById('nm-password').value;
 
-  // Admin oturumunu bozmadan yeni üyeyi Supabase Auth üzerinde oluştur
-  const tempAuthClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  const { error } = await supabaseClient.rpc('admin_create_member', {
+    p_first_name: firstName,
+    p_last_name: lastName,
+    p_phone: phone,
+    p_email: email,
+    p_password: password,
+    p_total_lessons: total,
+    p_completed_lessons: completed
   });
-
-  const { error: authError } = await tempAuthClient.auth.signUp({
-    email,
-    password
-  });
-
-  if (authError) {
-    alert('Supabase Auth kullanıcı kaydı sırasında hata oluştu: ' + authError.message);
-    return;
-  }
-
-  const { error } = await supabaseClient
-    .from('members')
-    .insert([{
-      first_name: firstName,
-      last_name: lastName,
-      phone,
-      email,
-      total_lessons: total,
-      completed_lessons: completed,
-      remaining_lessons: remaining,
-      role: 'Member',
-      status: 'Active'
-    }]);
 
   if (error) {
     alert('Üye kaydedilirken hata oluştu: ' + error.message);
@@ -393,6 +388,8 @@ async function confirmMemberBooking() {
 
     if (error) throw error;
 
+    if (typeof triggerPushNotificationDispatch === 'function') triggerPushNotificationDispatch();
+
     closeModal('member-book-confirm-modal');
     await loadAllDataFromSupabase();
     renderMemberBookingScreen();
@@ -423,6 +420,8 @@ async function confirmMemberCancelBooking() {
     });
 
     if (error) throw error;
+
+    if (typeof triggerPushNotificationDispatch === 'function') triggerPushNotificationDispatch();
 
     closeModal('member-cancel-confirm-modal');
     await loadAllDataFromSupabase();
