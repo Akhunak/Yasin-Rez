@@ -61,8 +61,8 @@
         <button type="button" id="nav-members" onclick="switchScreen('members')" class="font-bold text-xs uppercase px-3 py-2 border cursor-pointer">
           Üyeler
         </button>
-        <button type="button" id="admin-push-btn" onclick="enableAdminPushNotifications()" class="bg-input text-amber-400 hover:border-amber-500 font-bold text-xs uppercase px-3 py-2 border border-zinc-700 cursor-pointer">
-          Bildirim Aç
+        <button type="button" id="nav-settings" onclick="switchScreen('settings')" class="font-bold text-xs uppercase px-3 py-2 border cursor-pointer">
+          Ayarlar
         </button>
         <button type="button" onclick="logoutUser()" class="bg-zinc-900 text-red-400 hover:border-red-500 font-bold text-xs uppercase px-3 py-2 border border-zinc-700 cursor-pointer">
           Çıkış
@@ -634,6 +634,109 @@
   </section>
 
 
+  <!-- ==========================================
+       EKRAN 6.5: ADMİN - AYARLAR (BİLDİRİM TERCİHLERİ) EKRANI
+  =========================================== -->
+  <section id="screen-settings" class="hidden min-h-[calc(100vh-120px)] pb-16">
+    <main class="max-w-xl mx-auto px-4 pt-6">
+      <div class="bg-panel border-2 border-zinc-800 p-6">
+        <div class="border-b-2 border-zinc-800 pb-4 mb-6">
+          <span class="text-[11px] font-bold uppercase tracking-widest text-amber-500 block">
+            YÖNETİCİ AYARLARI
+          </span>
+          <h2 class="font-industrial text-3xl font-extrabold uppercase text-white mt-0.5 leading-none">
+            BİLDİRİM TERCİHLERİ
+          </h2>
+          <p class="text-xs text-zinc-400 mt-2">
+            Hangi durumlarda telefonunuza anlık bildirim (Push Notification) iletilmesini istediğinizi seçip <strong>"TAMAM"</strong> butonuna tıklayınız.
+          </p>
+        </div>
+
+        <div class="space-y-3 mb-6">
+          <!-- Cihaz Bildirim Aboneliği Anahtarı -->
+          <label class="bg-input border-2 border-amber-500/70 p-3.5 flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" id="set-device-push" class="w-4 h-4 mt-0.5 cursor-pointer shrink-0" />
+            <div>
+              <div class="text-sm font-bold text-amber-400 uppercase">Bu Cihazda Anlık Bildirimleri (Push) Etkinleştir</div>
+              <div id="set-device-push-desc" class="text-xs text-zinc-400 mt-0.5">
+                Bu telefon veya bilgisayara Avicii Training bildirimlerinin düşmesi için işaretleyiniz.
+              </div>
+            </div>
+          </label>
+
+          <div class="pt-2 pb-1 text-xs font-bold uppercase tracking-wider text-zinc-400 border-b border-zinc-800">
+            BİLDİRİM GÖNDERİLECEK DURUMLAR
+          </div>
+
+          <!-- 1. Senaryo -->
+          <label class="bg-input border border-zinc-800 hover:border-zinc-600 p-3.5 flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" id="set-book-private" class="w-4 h-4 mt-0.5 cursor-pointer shrink-0" checked />
+            <div>
+              <div class="text-sm font-bold text-white">1. Yarın İçin Özel Ders Seçimi</div>
+              <div class="text-xs text-zinc-400 font-mono mt-0.5">"adSoyad yarın için hh saatindeki dersi seçti"</div>
+            </div>
+          </label>
+
+          <!-- 2. Senaryo -->
+          <label class="bg-input border border-zinc-800 hover:border-zinc-600 p-3.5 flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" id="set-book-shared" class="w-4 h-4 mt-0.5 cursor-pointer shrink-0" checked />
+            <div>
+              <div class="text-sm font-bold text-white">2. Yarın İçin Ortak Ders Seçimi</div>
+              <div class="text-xs text-zinc-400 font-mono mt-0.5">"adSoyad yarın için hh saatindeki ortak derse dahil oldu x/5"</div>
+            </div>
+          </label>
+
+          <!-- 3. Senaryo -->
+          <label class="bg-input border border-zinc-800 hover:border-zinc-600 p-3.5 flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" id="set-cancel-tomorrow-private" class="w-4 h-4 mt-0.5 cursor-pointer shrink-0" checked />
+            <div>
+              <div class="text-sm font-bold text-white">3. Yarınki Özel Dersten Vazgeçme (23:59 Öncesi)</div>
+              <div class="text-xs text-zinc-400 font-mono mt-0.5">"adSoyad yarın hh saatindeki dersinden vazgeçti"</div>
+            </div>
+          </label>
+
+          <!-- 4. Senaryo -->
+          <label class="bg-input border border-zinc-800 hover:border-zinc-600 p-3.5 flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" id="set-cancel-tomorrow-shared" class="w-4 h-4 mt-0.5 cursor-pointer shrink-0" checked />
+            <div>
+              <div class="text-sm font-bold text-white">4. Yarınki Ortak Dersten Çıkma (23:59 Öncesi)</div>
+              <div class="text-xs text-zinc-400 font-mono mt-0.5">"adSoyad yarın hh saatindeki ortak dersten çıktı x/5"</div>
+            </div>
+          </label>
+
+          <!-- 5. Senaryo -->
+          <label class="bg-input border border-zinc-800 hover:border-zinc-600 p-3.5 flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" id="set-cancel-today-private" class="w-4 h-4 mt-0.5 cursor-pointer shrink-0" checked />
+            <div>
+              <div class="text-sm font-bold text-white">5. Bugünkü Özel Ders İptali (23:59 Sonrası)</div>
+              <div class="text-xs text-zinc-400 font-mono mt-0.5">"adSoyad bugün hh saatindeki dersini iptal etti"</div>
+            </div>
+          </label>
+
+          <!-- 6. Senaryo -->
+          <label class="bg-input border border-zinc-800 hover:border-zinc-600 p-3.5 flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" id="set-cancel-today-shared" class="w-4 h-4 mt-0.5 cursor-pointer shrink-0" checked />
+            <div>
+              <div class="text-sm font-bold text-white">6. Bugünkü Ortak Ders İptali (23:59 Sonrası)</div>
+              <div class="text-xs text-zinc-400 font-mono mt-0.5">"adSoyad bugün hh saatindeki ortak dersini iptal etti"</div>
+            </div>
+          </label>
+        </div>
+
+        <div class="flex justify-end pt-4 border-t-2 border-zinc-800">
+          <button 
+            type="button"
+            onclick="saveAdminNotificationSettings()" 
+            class="w-full sm:w-auto sm:min-w-[200px] bg-white hover:bg-zinc-200 text-black font-industrial font-extrabold text-xl uppercase py-3 px-8 tracking-wider cursor-pointer"
+          >
+            TAMAM
+          </button>
+        </div>
+      </div>
+    </main>
+  </section>
+
+
   <!-- =========================================================
        EKRAN 7: ÜYE - DERS SAATİ SEÇİM EKRANI (GERÇEK SAAT KONTROLLÜ)
   ========================================================== -->
@@ -854,15 +957,15 @@
 
   <!-- 8. GENEL BİLDİRİM MODALI -->
   <div id="toast-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-    <div class="w-full max-w-sm bg-panel border-2 border-emerald-500 p-6 text-center">
-      <div class="inline-block bg-emerald-500 text-black font-bold text-xs px-2 py-1 uppercase mb-3">
+    <div id="toast-box" class="w-full max-w-sm bg-panel border-2 border-emerald-500 p-6 text-center">
+      <div id="toast-badge" class="inline-block bg-emerald-500 text-black font-bold text-xs px-2 py-1 uppercase mb-3">
         BİLGİ
       </div>
       <h4 id="toast-title" class="font-industrial text-2xl font-extrabold uppercase text-white mb-2">
         İŞLEM TAMAMLANDI
       </h4>
       <p id="toast-desc" class="text-xs text-zinc-300 mb-6"></p>
-      <button type="button" onclick="closeModal('toast-modal')" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-industrial font-extrabold text-lg uppercase py-2.5 cursor-pointer">
+      <button type="button" id="toast-btn" onclick="closeModal('toast-modal')" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-industrial font-extrabold text-lg uppercase py-2.5 cursor-pointer">
         TAMAM
       </button>
     </div>
@@ -990,18 +1093,6 @@
       return outputArray;
     }
 
-    function updateAdminPushButtonUI(isActive) {
-      const btn = document.getElementById('admin-push-btn');
-      if (!btn) return;
-      if (isActive) {
-        btn.textContent = 'Bildirim Aktif';
-        btn.className = 'bg-input text-emerald-400 border-emerald-500 font-bold text-xs uppercase px-3 py-2 border cursor-pointer';
-      } else {
-        btn.textContent = 'Bildirim Aç';
-        btn.className = 'bg-input text-amber-400 hover:border-amber-500 font-bold text-xs uppercase px-3 py-2 border border-zinc-700 cursor-pointer';
-      }
-    }
-
     async function syncSubscriptionWithSupabase(sub) {
       if (!sub) return;
       const subJson = sub.toJSON();
@@ -1014,54 +1105,148 @@
       });
     }
 
+    function isHttpOrHttpsProtocol() {
+      return window.location.protocol === 'https:' || window.location.protocol === 'http:';
+    }
+
     async function checkAdminPushSubscriptionState() {
       if (currentRole !== 'admin') return;
+      if (!isHttpOrHttpsProtocol()) return;
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
       try {
         const reg = await navigator.serviceWorker.register('/sw.js');
         const sub = await reg.pushManager.getSubscription();
         if (sub && Notification.permission === 'granted') {
-          updateAdminPushButtonUI(true);
           await syncSubscriptionWithSupabase(sub);
-        } else {
-          updateAdminPushButtonUI(false);
         }
       } catch (e) {
         console.warn('Service worker kontrol hatası:', e);
       }
     }
 
-    async function enableAdminPushNotifications() {
+    async function renderAdminSettingsScreen() {
       if (currentRole !== 'admin') return;
-      if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-        alert('Bu tarayıcıda Web Push bildirimleri desteklenmiyor. iPhone kullanıyorsanız lütfen siteyi "Paylaş -> Ana Ekrana Ekle" ile ana ekrana ekleyip oradan açınız.');
-        return;
+
+      const deviceCheck = document.getElementById('set-device-push');
+      const deviceDesc = document.getElementById('set-device-push-desc');
+
+      if (!isHttpOrHttpsProtocol()) {
+        if (deviceCheck) deviceCheck.checked = false;
+        if (deviceDesc) {
+          deviceDesc.textContent = 'Cihaz bildirim aboneliği yalnızca canlı siteden (https://aviciitraining.com) açıldığında etkinleştirilebilir.';
+        }
+      } else if ('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
+        try {
+          const reg = await navigator.serviceWorker.register('/sw.js');
+          const sub = await reg.pushManager.getSubscription();
+          const isSubscribed = Boolean(sub && Notification.permission === 'granted');
+          if (deviceCheck) deviceCheck.checked = isSubscribed;
+          if (deviceDesc) {
+            deviceDesc.textContent = isSubscribed
+              ? 'Bu cihazda anlık bildirimler şu anda AKTİF.'
+              : 'Bu telefon veya bilgisayara Avicii Training bildirimlerinin düşmesi için işaretleyiniz.';
+          }
+        } catch (e) {
+          if (deviceCheck) deviceCheck.checked = false;
+        }
+      } else {
+        if (deviceCheck) deviceCheck.checked = false;
+        if (deviceDesc) {
+          deviceDesc.textContent = 'iPhone kullanıyorsanız bildirim alabilmek için siteyi Safari\'den "Paylaş -> Ana Ekrana Ekle" ile ana ekrana ekleyip oradan açınız.';
+        }
       }
 
       try {
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-          alert('Bildirim izni verilmedi. Tarayıcı veya telefon ayarlarından bildirim iznini etkinleştiriniz.');
+        const { data, error } = await supabaseClient.rpc('get_admin_notification_settings');
+        if (!error && data) {
+          document.getElementById('set-book-private').checked = data.notify_book_private !== false;
+          document.getElementById('set-book-shared').checked = data.notify_book_shared !== false;
+          document.getElementById('set-cancel-tomorrow-private').checked = data.notify_cancel_tomorrow_private !== false;
+          document.getElementById('set-cancel-tomorrow-shared').checked = data.notify_cancel_tomorrow_shared !== false;
+          document.getElementById('set-cancel-today-private').checked = data.notify_cancel_today_private !== false;
+          document.getElementById('set-cancel-today-shared').checked = data.notify_cancel_today_shared !== false;
+        }
+      } catch (e) {
+        console.warn('Bildirim ayarları yüklenemedi:', e);
+      }
+    }
+
+    async function saveAdminNotificationSettings() {
+      if (currentRole !== 'admin') return;
+
+      const wantDevicePush = document.getElementById('set-device-push').checked;
+      const notifyBookPrivate = document.getElementById('set-book-private').checked;
+      const notifyBookShared = document.getElementById('set-book-shared').checked;
+      const notifyCancelTomorrowPrivate = document.getElementById('set-cancel-tomorrow-private').checked;
+      const notifyCancelTomorrowShared = document.getElementById('set-cancel-tomorrow-shared').checked;
+      const notifyCancelTodayPrivate = document.getElementById('set-cancel-today-private').checked;
+      const notifyCancelTodayShared = document.getElementById('set-cancel-today-shared').checked;
+
+      setLoginLoadingState(true);
+      try {
+        const { error } = await supabaseClient.rpc('save_admin_notification_settings', {
+          p_notify_book_private: notifyBookPrivate,
+          p_notify_book_shared: notifyBookShared,
+          p_notify_cancel_tomorrow_private: notifyCancelTomorrowPrivate,
+          p_notify_cancel_tomorrow_shared: notifyCancelTomorrowShared,
+          p_notify_cancel_today_private: notifyCancelTodayPrivate,
+          p_notify_cancel_today_shared: notifyCancelTodayShared
+        });
+
+        if (error) {
+          showToast('HATA', 'Ayarlar kaydedilirken hata oluştu: ' + error.message, true);
           return;
         }
 
-        setLoginLoadingState(true);
-        const reg = await navigator.serviceWorker.register('/sw.js');
-        await navigator.serviceWorker.ready;
+        if (wantDevicePush) {
+          if (!isHttpOrHttpsProtocol()) {
+            await renderAdminSettingsScreen();
+            showToast('AYARLAR KAYDEDİLDİ', '6 bildirim tercihiniz veritabanına kaydedildi. Cihaz bildirim aboneliğini ise canlı siteden (https://aviciitraining.com) girerek aktif edebilirsiniz.');
+            return;
+          }
 
-        let sub = await reg.pushManager.getSubscription();
-        if (!sub) {
-          sub = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-          });
+          if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+            showToast('UYARI', 'Bu tarayıcıda Web Push desteklenmiyor. iPhone kullanıyorsanız lütfen siteyi "Paylaş -> Ana Ekrana Ekle" ile ana ekrana ekleyip oradan açınız.', true);
+            return;
+          }
+
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') {
+            showToast('UYARI', 'Bildirim izni verilmedi. Lütfen tarayıcı/telefon ayarlarından bildirim iznini açınız.', true);
+            return;
+          }
+
+          const reg = await navigator.serviceWorker.register('/sw.js');
+          await navigator.serviceWorker.ready;
+
+          let sub = await reg.pushManager.getSubscription();
+          if (!sub) {
+            sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+            });
+          }
+          await syncSubscriptionWithSupabase(sub);
+        } else if (isHttpOrHttpsProtocol() && 'serviceWorker' in navigator && 'PushManager' in window) {
+          try {
+            const reg = await navigator.serviceWorker.register('/sw.js');
+            const sub = await reg.pushManager.getSubscription();
+            if (sub) {
+              const subJson = sub.toJSON();
+              await sub.unsubscribe();
+              if (subJson && subJson.endpoint) {
+                await supabaseClient.rpc('remove_admin_push_subscription', {
+                  p_endpoint: subJson.endpoint
+                });
+              }
+            }
+          } catch (_) {}
         }
 
-        await syncSubscriptionWithSupabase(sub);
-        updateAdminPushButtonUI(true);
-        showToast('BİLDİRİMLER AKTİF', 'Bu cihazda anlık bildirimler (Push Notification) başarıyla etkinleştirildi.');
+        await renderAdminSettingsScreen();
+        showToast('AYARLAR KAYDEDİLDİ', 'Seçtiğiniz bildirim tercihleri başarıyla kaydedildi.');
       } catch (err) {
-        alert('Bildirim etkinleştirilirken hata oluştu: ' + err.message);
+        showToast('HATA', 'Ayarlar kaydedilirken hata oluştu: ' + err.message, true);
       } finally {
         setLoginLoadingState(false);
       }
@@ -1657,6 +1842,14 @@
         alert('Lütfen önce "Şifre Üret" butonuna tıklayarak şifre oluşturunuz.');
         return;
       }
+
+      const emailLower = email.toLowerCase();
+      const emailExists = members.some(m => (m.email || '').trim().toLowerCase() === emailLower);
+      if (emailExists) {
+        showToast('UYARI', 'Girdiğiniz e-posta adresi başka üye tarafından kullanılmaktadır', true);
+        return;
+      }
+
       document.getElementById('new-member-confirm-modal').classList.remove('hidden');
     }
 
@@ -1682,7 +1875,12 @@
         });
 
         if (error) {
-          alert('Üye kaydedilirken hata oluştu: ' + error.message);
+          closeModal('new-member-confirm-modal');
+          if (error.message && (error.message.includes('members_email_key') || error.message.includes('duplicate key') || error.code === '23505')) {
+            showToast('UYARI', 'Girdiğiniz e-posta adresi başka üye tarafından kullanılmaktadır', true);
+          } else {
+            showToast('HATA', 'Üye kaydedilirken hata oluştu: ' + error.message, true);
+          }
           return;
         }
 
@@ -1890,6 +2088,14 @@
         return;
       }
 
+      const duplicateOtherMember = members.some(
+        item => item.id !== selectedMemberId && (item.email || '').trim().toLowerCase() === email
+      );
+      if (duplicateOtherMember) {
+        showToast('UYARI', 'Girdiğiniz e-posta adresi başka üye tarafından kullanılmaktadır', true);
+        return;
+      }
+
       const { error } = await supabaseClient.rpc('admin_update_member', {
         p_member_id: selectedMemberId,
         p_first_name: firstName,
@@ -1901,7 +2107,11 @@
       });
 
       if (error) {
-        alert('Güncelleme hatası: ' + error.message);
+        if (error.message && (error.message.includes('members_email_key') || error.message.includes('duplicate key') || error.code === '23505')) {
+          showToast('UYARI', 'Girdiğiniz e-posta adresi başka üye tarafından kullanılmaktadır', true);
+        } else {
+          showToast('HATA', 'Güncelleme hatası: ' + error.message, true);
+        }
         return;
       }
 
@@ -2331,7 +2541,20 @@
       document.getElementById(id).classList.add('hidden');
     }
 
-    function showToast(title, desc) {
+    function showToast(title, desc, isError = false) {
+      const boxEl = document.getElementById('toast-box');
+      const badgeEl = document.getElementById('toast-badge');
+      if (boxEl) {
+        boxEl.className = isError
+          ? 'w-full max-w-sm bg-panel border-2 border-red-600 p-6 text-center'
+          : 'w-full max-w-sm bg-panel border-2 border-emerald-500 p-6 text-center';
+      }
+      if (badgeEl) {
+        badgeEl.textContent = isError ? 'UYARI' : 'BİLGİ';
+        badgeEl.className = isError
+          ? 'inline-block bg-red-600 text-white font-bold text-xs px-2 py-1 uppercase mb-3'
+          : 'inline-block bg-emerald-500 text-black font-bold text-xs px-2 py-1 uppercase mb-3';
+      }
       document.getElementById('toast-title').textContent = title;
       document.getElementById('toast-desc').textContent = desc;
       document.getElementById('toast-modal').classList.remove('hidden');

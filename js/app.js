@@ -68,7 +68,7 @@ function createRandom8CharPassword() {
 // 7. EKRAN GEÇİŞ YÖNETİMİ
 // =========================================================================
 function switchScreen(screenName) {
-  const screens = ['login', 'slots', 'schedule', 'members', 'new-member', 'member-detail', 'member-booking'];
+  const screens = ['login', 'slots', 'schedule', 'members', 'new-member', 'member-detail', 'member-booking', 'settings'];
   screens.forEach(s => {
     const el = document.getElementById(`screen-${s}`);
     if (el) el.classList.add('hidden');
@@ -93,7 +93,8 @@ function switchScreen(screenName) {
   const adminNavs = {
     slots: document.getElementById('nav-slots'),
     schedule: document.getElementById('nav-schedule'),
-    members: document.getElementById('nav-members')
+    members: document.getElementById('nav-members'),
+    settings: document.getElementById('nav-settings')
   };
   Object.values(adminNavs).forEach(btn => {
     if (btn) btn.className = 'bg-input text-zinc-300 hover:border-white font-bold text-xs uppercase px-3 py-2 border border-zinc-700 cursor-pointer';
@@ -110,6 +111,10 @@ function switchScreen(screenName) {
   if (['members', 'new-member'].includes(screenName) || (screenName === 'member-detail' && currentRole === 'admin')) {
     adminNavs.members.className = 'bg-white text-black font-bold text-xs uppercase px-3 py-2 border border-white cursor-pointer';
     if (screenName === 'members') renderMembersList();
+  }
+  if (screenName === 'settings' && currentRole === 'admin') {
+    if (adminNavs.settings) adminNavs.settings.className = 'bg-white text-black font-bold text-xs uppercase px-3 py-2 border border-white cursor-pointer';
+    if (typeof renderAdminSettingsScreen === 'function') renderAdminSettingsScreen();
   }
 
   const memberNavBooking = document.getElementById('nav-member-booking');

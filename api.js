@@ -238,7 +238,12 @@ async function confirmCreateMember() {
   });
 
   if (error) {
-    alert('Üye kaydedilirken hata oluştu: ' + error.message);
+    closeModal('new-member-confirm-modal');
+    if (error.message && (error.message.includes('members_email_key') || error.message.includes('duplicate key') || error.code === '23505')) {
+      showToast('UYARI', 'Girdiğiniz e-posta adresi başka üye tarafından kullanılmaktadır', true);
+    } else {
+      showToast('HATA', 'Üye kaydedilirken hata oluştu: ' + error.message, true);
+    }
     return;
   }
 
@@ -315,7 +320,11 @@ async function saveMemberChanges() {
   });
 
   if (error) {
-    alert('Güncelleme hatası: ' + error.message);
+    if (error.message && (error.message.includes('members_email_key') || error.message.includes('duplicate key') || error.code === '23505')) {
+      showToast('UYARI', 'Girdiğiniz e-posta adresi başka üye tarafından kullanılmaktadır', true);
+    } else {
+      showToast('HATA', 'Güncelleme hatası: ' + error.message, true);
+    }
     return;
   }
 

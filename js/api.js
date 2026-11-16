@@ -94,26 +94,26 @@ async function loadAdminSlotsForDate(targetDateISO) {
   });
 }
 
-async function loadTomorrowSlotsFromSupabase() {
-  const tomorrowISO = getDateISO(1);
-
+async function fetchSlotsForDateISO(dateISO) {
   let { data: slotRows, error: slotErr } = await supabaseClient.rpc('get_slots_for_member', {
-    p_slot_date: tomorrowISO
+    p_slot_date: dateISO
   });
 
-  // Eğer veritabanında get_slots_for_member RPC fonksiyonu henüz oluşturulmamışsa doğrudan daily_slots sorgusuna geri dön
   if (slotErr) {
     const fallbackRes = await supabaseClient
       .from('daily_slots')
       .select('*, bookings(*)')
-      .eq('slot_date', tomorrowISO);
+      .eq('slot_date', dateISO);
     slotRows = fallbackRes.data;
     slotErr = fallbackRes.error;
   }
 
   if (slotErr) throw slotErr;
+  return slotRows || [];
+}
 
-  timeSlots.forEach(s => {
+function mapSlotRowsIntoArray(slotRows, targetArray) {
+  targetArray.forEach(s => {
     const found = (slotRows || []).find(r => r.hour_index === s.id);
     if (found) {
       s.dbSlotId = found.id;
@@ -133,5 +133,20 @@ async function loadTomorrowSlotsFromSupabase() {
       s.bookings = [];
     }
   });
+}
+
+async function loadTomorrowSlotsFromSupabase() {
+  const todayISO = getDateISO(0);
+  const tomorrowISO = getDateISO(1);
+
+  const [todayRows, tomorrowRows] = await Promise.all([
+    fetchSlotsForDateISO(todayISO),
+    fetchSlotsForDateISO(tomorrowISO)
+  ]);
+
+  if (typeof todayTimeSlots !== 'undefined') {
+    mapSlotRowsIntoArray(todayRows, todayTimeSlots);
+  }
+  mapSlotRowsIntoArray(tomorrowRows, timeSlots);
 }
 
