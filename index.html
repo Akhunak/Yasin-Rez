@@ -668,58 +668,22 @@
             BİLDİRİM GÖNDERİLECEK DURUMLAR
           </div>
 
-          <!-- 1. Senaryo -->
-          <label class="bg-input border border-zinc-800 hover:border-zinc-600 p-3.5 flex items-start gap-3 cursor-pointer">
-            <input type="checkbox" id="set-book-private" class="w-4 h-4 mt-0.5 cursor-pointer shrink-0" checked />
-            <div>
-              <div class="text-sm font-bold text-white">1. Yarın İçin Özel Ders Seçimi</div>
-              <div class="text-xs text-zinc-400 font-mono mt-0.5">"adSoyad yarın için hh saatindeki dersi seçti"</div>
-            </div>
+          <!-- 1. Madde -->
+          <label class="bg-input border border-zinc-800 hover:border-zinc-600 p-3.5 flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" id="set-book-tomorrow" class="w-4 h-4 cursor-pointer shrink-0" checked />
+            <div class="text-sm font-bold text-white">Yarın İçin Ders Seçimi</div>
           </label>
 
-          <!-- 2. Senaryo -->
-          <label class="bg-input border border-zinc-800 hover:border-zinc-600 p-3.5 flex items-start gap-3 cursor-pointer">
-            <input type="checkbox" id="set-book-shared" class="w-4 h-4 mt-0.5 cursor-pointer shrink-0" checked />
-            <div>
-              <div class="text-sm font-bold text-white">2. Yarın İçin Ortak Ders Seçimi</div>
-              <div class="text-xs text-zinc-400 font-mono mt-0.5">"adSoyad yarın için hh saatindeki ortak derse dahil oldu x/5"</div>
-            </div>
+          <!-- 2. Madde -->
+          <label class="bg-input border border-zinc-800 hover:border-zinc-600 p-3.5 flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" id="set-cancel-tomorrow" class="w-4 h-4 cursor-pointer shrink-0" checked />
+            <div class="text-sm font-bold text-white">Yarınki Dersten Vazgeçme</div>
           </label>
 
-          <!-- 3. Senaryo -->
-          <label class="bg-input border border-zinc-800 hover:border-zinc-600 p-3.5 flex items-start gap-3 cursor-pointer">
-            <input type="checkbox" id="set-cancel-tomorrow-private" class="w-4 h-4 mt-0.5 cursor-pointer shrink-0" checked />
-            <div>
-              <div class="text-sm font-bold text-white">3. Yarınki Özel Dersten Vazgeçme (23:59 Öncesi)</div>
-              <div class="text-xs text-zinc-400 font-mono mt-0.5">"adSoyad yarın hh saatindeki dersinden vazgeçti"</div>
-            </div>
-          </label>
-
-          <!-- 4. Senaryo -->
-          <label class="bg-input border border-zinc-800 hover:border-zinc-600 p-3.5 flex items-start gap-3 cursor-pointer">
-            <input type="checkbox" id="set-cancel-tomorrow-shared" class="w-4 h-4 mt-0.5 cursor-pointer shrink-0" checked />
-            <div>
-              <div class="text-sm font-bold text-white">4. Yarınki Ortak Dersten Çıkma (23:59 Öncesi)</div>
-              <div class="text-xs text-zinc-400 font-mono mt-0.5">"adSoyad yarın hh saatindeki ortak dersten çıktı x/5"</div>
-            </div>
-          </label>
-
-          <!-- 5. Senaryo -->
-          <label class="bg-input border border-zinc-800 hover:border-zinc-600 p-3.5 flex items-start gap-3 cursor-pointer">
-            <input type="checkbox" id="set-cancel-today-private" class="w-4 h-4 mt-0.5 cursor-pointer shrink-0" checked />
-            <div>
-              <div class="text-sm font-bold text-white">5. Bugünkü Özel Ders İptali (23:59 Sonrası)</div>
-              <div class="text-xs text-zinc-400 font-mono mt-0.5">"adSoyad bugün hh saatindeki dersini iptal etti"</div>
-            </div>
-          </label>
-
-          <!-- 6. Senaryo -->
-          <label class="bg-input border border-zinc-800 hover:border-zinc-600 p-3.5 flex items-start gap-3 cursor-pointer">
-            <input type="checkbox" id="set-cancel-today-shared" class="w-4 h-4 mt-0.5 cursor-pointer shrink-0" checked />
-            <div>
-              <div class="text-sm font-bold text-white">6. Bugünkü Ortak Ders İptali (23:59 Sonrası)</div>
-              <div class="text-xs text-zinc-400 font-mono mt-0.5">"adSoyad bugün hh saatindeki ortak dersini iptal etti"</div>
-            </div>
+          <!-- 3. Madde -->
+          <label class="bg-input border border-zinc-800 hover:border-zinc-600 p-3.5 flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" id="set-cancel-today" class="w-4 h-4 cursor-pointer shrink-0" checked />
+            <div class="text-sm font-bold text-white">Aynı Gün Ders İptali</div>
           </label>
         </div>
 
@@ -1159,12 +1123,9 @@
       try {
         const { data, error } = await supabaseClient.rpc('get_admin_notification_settings');
         if (!error && data) {
-          document.getElementById('set-book-private').checked = data.notify_book_private !== false;
-          document.getElementById('set-book-shared').checked = data.notify_book_shared !== false;
-          document.getElementById('set-cancel-tomorrow-private').checked = data.notify_cancel_tomorrow_private !== false;
-          document.getElementById('set-cancel-tomorrow-shared').checked = data.notify_cancel_tomorrow_shared !== false;
-          document.getElementById('set-cancel-today-private').checked = data.notify_cancel_today_private !== false;
-          document.getElementById('set-cancel-today-shared').checked = data.notify_cancel_today_shared !== false;
+          document.getElementById('set-book-tomorrow').checked = (data.notify_book_private !== false && data.notify_book_shared !== false);
+          document.getElementById('set-cancel-tomorrow').checked = (data.notify_cancel_tomorrow_private !== false && data.notify_cancel_tomorrow_shared !== false);
+          document.getElementById('set-cancel-today').checked = (data.notify_cancel_today_private !== false && data.notify_cancel_today_shared !== false);
         }
       } catch (e) {
         console.warn('Bildirim ayarları yüklenemedi:', e);
@@ -1175,22 +1136,19 @@
       if (currentRole !== 'admin') return;
 
       const wantDevicePush = document.getElementById('set-device-push').checked;
-      const notifyBookPrivate = document.getElementById('set-book-private').checked;
-      const notifyBookShared = document.getElementById('set-book-shared').checked;
-      const notifyCancelTomorrowPrivate = document.getElementById('set-cancel-tomorrow-private').checked;
-      const notifyCancelTomorrowShared = document.getElementById('set-cancel-tomorrow-shared').checked;
-      const notifyCancelTodayPrivate = document.getElementById('set-cancel-today-private').checked;
-      const notifyCancelTodayShared = document.getElementById('set-cancel-today-shared').checked;
+      const notifyBookTomorrow = document.getElementById('set-book-tomorrow').checked;
+      const notifyCancelTomorrow = document.getElementById('set-cancel-tomorrow').checked;
+      const notifyCancelToday = document.getElementById('set-cancel-today').checked;
 
       setLoginLoadingState(true);
       try {
         const { error } = await supabaseClient.rpc('save_admin_notification_settings', {
-          p_notify_book_private: notifyBookPrivate,
-          p_notify_book_shared: notifyBookShared,
-          p_notify_cancel_tomorrow_private: notifyCancelTomorrowPrivate,
-          p_notify_cancel_tomorrow_shared: notifyCancelTomorrowShared,
-          p_notify_cancel_today_private: notifyCancelTodayPrivate,
-          p_notify_cancel_today_shared: notifyCancelTodayShared
+          p_notify_book_private: notifyBookTomorrow,
+          p_notify_book_shared: notifyBookTomorrow,
+          p_notify_cancel_tomorrow_private: notifyCancelTomorrow,
+          p_notify_cancel_tomorrow_shared: notifyCancelTomorrow,
+          p_notify_cancel_today_private: notifyCancelToday,
+          p_notify_cancel_today_shared: notifyCancelToday
         });
 
         if (error) {
@@ -1201,7 +1159,7 @@
         if (wantDevicePush) {
           if (!isHttpOrHttpsProtocol()) {
             await renderAdminSettingsScreen();
-            showToast('AYARLAR KAYDEDİLDİ', '6 bildirim tercihiniz veritabanına kaydedildi. Cihaz bildirim aboneliğini ise canlı siteden (https://aviciitraining.com) girerek aktif edebilirsiniz.');
+            showToast('AYARLAR KAYDEDİLDİ', 'Bildirim tercihleriniz veritabanına kaydedildi. Cihaz bildirim aboneliğini ise canlı siteden (https://aviciitraining.com) girerek aktif edebilirsiniz.');
             return;
           }
 
