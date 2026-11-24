@@ -1046,6 +1046,36 @@
 
     const VAPID_PUBLIC_KEY = 'BDU9_5Dv1TJKTc0xf9g43loc_AmuJ2_n4koi2LwzfwUz8r1YMbMM8YeUAQ20tBR-_7FfB8G7g-FSesenOwm04h8';
 
+    // Kaydedilmiş son bildirim tercihlerini bellekte tut (TAMAM'a basılmadan sekme değiştirilirse 0ms'de eski haline döner)
+    let savedNotificationSettings = {
+      devicePush: false,
+      bookTomorrow: true,
+      cancelTomorrow: true,
+      cancelToday: true
+    };
+
+    function applySavedNotificationSettingsToDOM() {
+      const deviceCheck = document.getElementById('set-device-push');
+      const deviceDesc = document.getElementById('set-device-push-desc');
+      const bookTomorrowEl = document.getElementById('set-book-tomorrow');
+      const cancelTomorrowEl = document.getElementById('set-cancel-tomorrow');
+      const cancelTodayEl = document.getElementById('set-cancel-today');
+
+      if (deviceCheck) deviceCheck.checked = savedNotificationSettings.devicePush;
+      if (deviceDesc) {
+        if (!isHttpOrHttpsProtocol()) {
+          deviceDesc.textContent = 'Cihaz bildirim aboneliği yalnızca canlı siteden (https://aviciitraining.com) açıldığında etkinleştirilebilir.';
+        } else {
+          deviceDesc.textContent = savedNotificationSettings.devicePush
+            ? 'Bu cihazda anlık bildirimler şu anda AKTİF.'
+            : 'Bu telefon veya bilgisayara Avicii Training bildirimlerinin düşmesi için işaretleyiniz.';
+        }
+      }
+      if (bookTomorrowEl) bookTomorrowEl.checked = savedNotificationSettings.bookTomorrow;
+      if (cancelTomorrowEl) cancelTomorrowEl.checked = savedNotificationSettings.cancelTomorrow;
+      if (cancelTodayEl) cancelTodayEl.checked = savedNotificationSettings.cancelToday;
+    }
+
     function urlBase64ToUint8Array(base64String) {
       const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
       const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -1075,12 +1105,24 @@
 
     async function checkAdminPushSubscriptionState() {
       if (currentRole !== 'admin') return;
+
+      // Arka planda veritabanındaki kayıtlı bildirim ayarlarını belleğe çek
+      supabaseClient.rpc('get_admin_notification_settings').then(({ data, error }) => {
+        if (!error && data) {
+          savedNotificationSettings.bookTomorrow = (data.notify_book_private !== false && data.notify_book_shared !== false);
+          savedNotificationSettings.cancelTomorrow = (data.notify_cancel_tomorrow_private !== false && data.notify_cancel_tomorrow_shared !== false);
+          savedNotificationSettings.cancelToday = (data.notify_cancel_today_private !== false && data.notify_cancel_today_shared !== false);
+        }
+      }).catch(() => {});
+
       if (!isHttpOrHttpsProtocol()) return;
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
       try {
         const reg = await navigator.serviceWorker.register('/sw.js');
         const sub = await reg.pushManager.getSubscription();
-        if (sub && Notification.permission === 'granted') {
+        const isSubscribed = Boolean(sub && Notification.permission === 'granted');
+        savedNotificationSettings.devicePush = isSubscribed;
+        if (isSubscribed) {
           await syncSubscriptionWithSupabase(sub);
         }
       } catch (e) {
@@ -1091,10 +1133,14 @@
     async function renderAdminSettingsScreen() {
       if (currentRole !== 'admin') return;
 
+      // 1. Sekmeye girildiği anda (0ms gecikmeyle) kaydedilmemiş değişiklikleri sıfırla ve son kayıtlı durumu göster
+      applySavedNotificationSettingsToDOM();
+
       const deviceCheck = document.getElementById('set-device-push');
       const deviceDesc = document.getElementById('set-device-push-desc');
 
       if (!isHttpOrHttpsProtocol()) {
+        savedNotificationSettings.devicePush = false;
         if (deviceCheck) deviceCheck.checked = false;
         if (deviceDesc) {
           deviceDesc.textContent = 'Cihaz bildirim aboneliği yalnızca canlı siteden (https://aviciitraining.com) açıldığında etkinleştirilebilir.';
@@ -1104,6 +1150,7 @@
           const reg = await navigator.serviceWorker.register('/sw.js');
           const sub = await reg.pushManager.getSubscription();
           const isSubscribed = Boolean(sub && Notification.permission === 'granted');
+          savedNotificationSettings.devicePush = isSubscribed;
           if (deviceCheck) deviceCheck.checked = isSubscribed;
           if (deviceDesc) {
             deviceDesc.textContent = isSubscribed
@@ -1111,9 +1158,11 @@
               : 'Bu telefon veya bilgisayara Avicii Training bildirimlerinin düşmesi için işaretleyiniz.';
           }
         } catch (e) {
+          savedNotificationSettings.devicePush = false;
           if (deviceCheck) deviceCheck.checked = false;
         }
       } else {
+        savedNotificationSettings.devicePush = false;
         if (deviceCheck) deviceCheck.checked = false;
         if (deviceDesc) {
           deviceDesc.textContent = 'iPhone kullanıyorsanız bildirim alabilmek için siteyi Safari\'den "Paylaş -> Ana Ekrana Ekle" ile ana ekrana ekleyip oradan açınız.';
@@ -1123,9 +1172,10 @@
       try {
         const { data, error } = await supabaseClient.rpc('get_admin_notification_settings');
         if (!error && data) {
-          document.getElementById('set-book-tomorrow').checked = (data.notify_book_private !== false && data.notify_book_shared !== false);
-          document.getElementById('set-cancel-tomorrow').checked = (data.notify_cancel_tomorrow_private !== false && data.notify_cancel_tomorrow_shared !== false);
-          document.getElementById('set-cancel-today').checked = (data.notify_cancel_today_private !== false && data.notify_cancel_today_shared !== false);
+          savedNotificationSettings.bookTomorrow = (data.notify_book_private !== false && data.notify_book_shared !== false);
+          savedNotificationSettings.cancelTomorrow = (data.notify_cancel_tomorrow_private !== false && data.notify_cancel_tomorrow_shared !== false);
+          savedNotificationSettings.cancelToday = (data.notify_cancel_today_private !== false && data.notify_cancel_today_shared !== false);
+          applySavedNotificationSettingsToDOM();
         }
       } catch (e) {
         console.warn('Bildirim ayarları yüklenemedi:', e);
@@ -1156,20 +1206,29 @@
           return;
         }
 
+        savedNotificationSettings.bookTomorrow = notifyBookTomorrow;
+        savedNotificationSettings.cancelTomorrow = notifyCancelTomorrow;
+        savedNotificationSettings.cancelToday = notifyCancelToday;
+
         if (wantDevicePush) {
           if (!isHttpOrHttpsProtocol()) {
-            await renderAdminSettingsScreen();
+            savedNotificationSettings.devicePush = false;
+            applySavedNotificationSettingsToDOM();
             showToast('AYARLAR KAYDEDİLDİ', 'Bildirim tercihleriniz veritabanına kaydedildi. Cihaz bildirim aboneliğini ise canlı siteden (https://aviciitraining.com) girerek aktif edebilirsiniz.');
             return;
           }
 
           if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+            savedNotificationSettings.devicePush = false;
+            applySavedNotificationSettingsToDOM();
             showToast('UYARI', 'Bu tarayıcıda Web Push desteklenmiyor. iPhone kullanıyorsanız lütfen siteyi "Paylaş -> Ana Ekrana Ekle" ile ana ekrana ekleyip oradan açınız.', true);
             return;
           }
 
           const permission = await Notification.requestPermission();
           if (permission !== 'granted') {
+            savedNotificationSettings.devicePush = false;
+            applySavedNotificationSettingsToDOM();
             showToast('UYARI', 'Bildirim izni verilmedi. Lütfen tarayıcı/telefon ayarlarından bildirim iznini açınız.', true);
             return;
           }
@@ -1185,6 +1244,7 @@
             });
           }
           await syncSubscriptionWithSupabase(sub);
+          savedNotificationSettings.devicePush = true;
         } else if (isHttpOrHttpsProtocol() && 'serviceWorker' in navigator && 'PushManager' in window) {
           try {
             const reg = await navigator.serviceWorker.register('/sw.js');
@@ -1199,9 +1259,10 @@
               }
             }
           } catch (_) {}
+          savedNotificationSettings.devicePush = false;
         }
 
-        await renderAdminSettingsScreen();
+        applySavedNotificationSettingsToDOM();
         showToast('AYARLAR KAYDEDİLDİ', 'Seçtiğiniz bildirim tercihleri başarıyla kaydedildi.');
       } catch (err) {
         showToast('HATA', 'Ayarlar kaydedilirken hata oluştu: ' + err.message, true);
